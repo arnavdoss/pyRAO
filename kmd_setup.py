@@ -1,5 +1,6 @@
 mainapp = """
 #:import Transition kivy.uix.screenmanager.FadeTransition
+#:import MDLabel kivymd.uix.label.MDLabel
 Screen:
     NavigationLayout:
         # x: toolbar.height
@@ -123,12 +124,12 @@ Screen:
                                     name: "w_max"
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "max"
-                                    text: "1"
+                                    text: "0.10"
                                 InputText:
                                     name: "n_w"
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
-                                    text: "1"
+                                    text: "2"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "waves"
@@ -197,24 +198,14 @@ Screen:
                     ScrollView:    
                         do_scroll_x: False
                         smooth_scroll_end: 10
-                        always_overscroll: False
-                        MDStackLayout:                        
-                            orientation: "lr-tb"
-                            spacing: 10
-                            padding: 20
-                            size_hint_x: 1
-                            adaptive_height: True                            
-                            InputBox:
-                                InputHeaderIcon:
-                                    icon: "ferry"
-                                InputText:
-                                    helper_text: "Length"
-                                InputText:
-                                    helper_text: "Breadth"
-                                InputText:
-                                    helper_text: "Height"
-                                InputText:
-                                    helper_text: "Draft"
+                        always_overscroll: False                    
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            Image:
+                                source: 'plot.png'
+                                # size_hint_x: 0.4
+                                # allow_stretch: True                     
+                            
                 
                             
         # # on button, use #nav_drawer.set_state("open")      

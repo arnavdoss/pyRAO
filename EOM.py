@@ -62,9 +62,14 @@ class EOM:
         CM, CA, Fex, body = self.solvediff(v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, self.show)
         RAO = {}
         for a, b in enumerate(omega.tolist()):
-            RAO[a] = self.solveeom(b, Mk, np.array(CM[b]), np.array(CA[b]), Ck, Fex[b])
-        # self.animate(omega.tolist()[0], body, RAO)
+            RAO_data = self.solveeom(b, Mk, np.array(CM[b]), np.array(CA[b]), Ck, Fex[b])
+            RAO_temp = []
+            for c in range(len(RAO_data)):
+                RAO_temp.append(np.round(RAO_data[c], 6).tolist())
+            RAO[a] = [item for sublist in RAO_temp for item in sublist]
         return RAO
+        # self.animate(omega.tolist()[0], body, RAO)
+        # return RAO
 
     def solvediff(self, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, show):
         mesh = mm.meshmaker('barge', v_l, v_b, v_t, p_l, p_w, p_h)

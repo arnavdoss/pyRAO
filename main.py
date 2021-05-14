@@ -8,6 +8,7 @@ from kivymd.uix.stacklayout import MDStackLayout
 from kivy.properties import ObjectProperty
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import MDList
+from kivymd.uix.label import MDLabel
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.app import MDApp
 from kmd_setup import mainapp
@@ -17,7 +18,7 @@ from kivymd.uix.textfield import MDTextField
 Window.size = (360, 740)
 
 
-class DemoApp(MDApp):
+class pyRAOApp(MDApp):
     class ContentNavigationDrawer(BoxLayout):
         screen_manager = ObjectProperty()
         # nav_drawer = ObjectProperty()
@@ -26,26 +27,30 @@ class DemoApp(MDApp):
     #     pass
 
     InputValues = {}
+
     def on_text(instance, name, value):
-        DemoApp.InputValues[name] = value
+        pyRAOApp.InputValues[name] = value
         pass
 
     RAO = []
-    def runDiffraction(self):
-        DemoApp.RAO = EOM(DemoApp.InputValues, show=False).solve()
-        print(DemoApp.RAO)
-        return
 
-    def plotRAO(self):
-        RAO = DemoApp.RAO
+    def runDiffraction(self):
+        pyRAOApp.RAO = EOM(pyRAOApp.InputValues, show=False).solve()
+        pyRAOApp.plotRAO(self, pyRAOApp.RAO)
+        print(pyRAOApp.RAO)
+        pass
+
+    def plotRAO(self, RAO):
         rao11 = []
         rao22 = []
         rao33 = []
         rao44 = []
         rao55 = []
         rao66 = []
+        omega = np.linspace(float(pyRAOApp.InputValues["w_min"]), float(pyRAOApp.InputValues["w_max"]),
+                            int(pyRAOApp.InputValues["n_w"]))
 
-        for a in range(DemoApp.InputValues["n_w"]):
+        for a in range(int(pyRAOApp.InputValues["n_w"])):
             rao11.append(RAO[a][0])
             rao22.append(RAO[a][1])
             rao33.append(RAO[a][2])
@@ -54,25 +59,24 @@ class DemoApp(MDApp):
             rao66.append(RAO[a][5])
 
         plt.figure()
-        plt.subplot(231)
-        plt.plot(diff_inputs.omega, rao11)
+        plt.plot(omega, rao11)
         plt.title('Surge')
-        plt.subplot(232)
-        plt.plot(diff_inputs.omega, rao22)
+        plt.subplot(162)
+        plt.plot(omega, rao22)
         plt.title('Sway')
-        plt.subplot(233)
-        plt.plot(diff_inputs.omega, rao33)
+        plt.subplot(163)
+        plt.plot(omega, rao33)
         plt.title('Heave')
-        plt.subplot(234)
-        plt.plot(diff_inputs.omega, rao44)
+        plt.subplot(164)
+        plt.plot(omega, rao44)
         plt.title('Roll')
-        plt.subplot(235)
-        plt.plot(diff_inputs.omega, rao55)
+        plt.subplot(165)
+        plt.plot(omega, rao55)
         plt.title('Pitch')
-        plt.subplot(236)
-        plt.plot(diff_inputs.omega, rao66)
+        plt.subplot(166)
+        plt.plot(omega, rao66)
         plt.title('Yaw')
-
+        plt.savefig('plot.png')
 
     class FloatInput(MDTextField):
         pat = re.compile('[^0-9]')
@@ -83,7 +87,7 @@ class DemoApp(MDApp):
                 s = re.sub(pat, '', substring)
             else:
                 s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
-            return super(DemoApp.FloatInput, self).insert_text(s, from_undo=from_undo)
+            return super(pyRAOApp.FloatInput, self).insert_text(s, from_undo=from_undo)
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
@@ -100,7 +104,7 @@ class DemoApp(MDApp):
 
 
 if __name__ == '__main__':
-    DemoApp().run()
+    pyRAOApp().run()
     #
     # v_l = 100  # Vessel length
     # v_b = 20  # Vessel beam

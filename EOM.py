@@ -5,29 +5,33 @@ import xarray as xr
 
 
 class EOM:
-    def __init__(self, vessel, panel, diff_inputs, show):
-        self.vessel = vessel
-        self.panel = panel
-        self.diff_inputs = diff_inputs
+    def __init__(self, inputs, show):
+        self.inputs = {k:np.float(v) for k, v in inputs.items()}
         self.show = show
 
     def solve(self):
-        v_l = self.vessel.length
-        v_b = self.vessel.beam
-        v_t = self.vessel.draft
-        v_h = self.vessel.height
-        cogx = self.vessel.cogx
-        cogy = self.vessel.cogy
-        cogz = self.vessel.cogz
-        p_l = self.panel.length
-        p_w = self.panel.width
-        p_h = self.panel.height
-        omega = self.diff_inputs.omega
-        wave_dir = self.diff_inputs.wave_dir
-        water_depth = self.diff_inputs.water_depth
-        rho_water = self.diff_inputs.rho_water
-        grav_acc = self.diff_inputs.grav_acc
+        v_l = self.inputs["v_l"]
+        v_b = self.inputs["v_b"]
+        v_t = self.inputs["v_t"]
+        v_h = self.inputs["v_h"]
+        cogx = self.inputs["cogx"]
+        cogy = self.inputs["cogy"]
+        cogz = self.inputs["cogz"]
+        p_l = self.inputs["p_l"]
+        p_w = self.inputs["p_w"]
+        p_h = self.inputs["p_h"]
+        w_min = self.inputs["w_min"]
+        w_max = self.inputs["w_max"]
+        n_w = self.inputs["n_w"]
+        d_min = self.inputs["d_min"]
+        d_max = self.inputs["d_max"]
+        n_d = self.inputs["n_d"]
+        water_depth = self.inputs["water_depth"]
+        rho_water = self.inputs["rho_water"]
+        grav_acc = 9.81
 
+        omega = np.linspace(w_min, w_max, int(n_w))
+        wave_dir = np.linspace(d_min, d_max, int(n_d))
         Awl = v_l * v_b
         nabla = v_l * v_b * v_t
         cobz = v_t/2
@@ -37,14 +41,14 @@ class EOM:
         Mk[0, 0] = mass
         Mk[1, 1] = mass
         Mk[2, 2] = mass
-        Mk[3, 3] = (1 / 12) * (v_b ^ 2 + v_h ^ 2) * mass
-        Mk[4, 4] = (1 / 12) * (v_h ^ 2 + v_l ^ 2) * mass
-        Mk[5, 5] = (1 / 12) * (v_l ^ 2 + v_b ^ 2) * mass
+        Mk[3, 3] = (1 / 12) * (v_b ** 2 + v_h ** 2) * mass
+        Mk[4, 4] = (1 / 12) * (v_h ** 2 + v_l ** 2) * mass
+        Mk[5, 5] = (1 / 12) * (v_l ** 2 + v_b ** 2) * mass
 
         Ck = np.zeros((6, 6))
         Ck[2, 2] = Awl
-        Ck[3, 3] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ^ 2)
-        Ck[4, 4] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ^ 2)
+        Ck[3, 3] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
+        Ck[4, 4] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
         Ck[2, 3] = Awl * cogy
         Ck[3, 2] = Ck[2, 3]
         Ck[2, 4] = -Awl * cogx

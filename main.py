@@ -95,7 +95,7 @@ class pyRAOApp(MDApp):
             plotrao[4].append(self.RAO[a][4])
             plotrao[5].append(self.RAO[a][5])
             self.plotRAO(plotomega, plotrao)
-        self.RAOpd = pd.DataFrame([self.RAO], columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
+        self.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
 
     def plotRAO(self, omega, RAO):
         print(omega)

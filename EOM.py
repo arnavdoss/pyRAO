@@ -5,8 +5,9 @@ import xarray as xr
 
 
 class EOM:
-    def __init__(self, inputs, show):
-        self.inputs = {k:np.float(v) for k, v in inputs.items()}
+    def __init__(self, body, inputs, show):
+        self.body = body
+        self.inputs = {k: np.float(v) for k, v in inputs.items()}
         self.show = show
 
     def solve(self):
@@ -34,7 +35,7 @@ class EOM:
         wave_dir = np.linspace(d_min, d_max, int(n_d))
         Awl = v_l * v_b
         nabla = v_l * v_b * v_t
-        cobz = v_t/2
+        cobz = v_t / 2
         mass = rho_water * nabla
 
         Mk = np.zeros((6, 6))
@@ -47,8 +48,8 @@ class EOM:
 
         Ck = np.zeros((6, 6))
         Ck[2, 2] = Awl
-        Ck[3, 3] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
-        Ck[4, 4] = -(nabla * cogz) + (nabla * cobz) + (1/12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
+        Ck[3, 3] = -(nabla * cogz) + (nabla * cobz) + (1 / 12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
+        Ck[4, 4] = -(nabla * cogz) + (nabla * cobz) + (1 / 12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
         Ck[2, 3] = Awl * cogy
         Ck[3, 2] = Ck[2, 3]
         Ck[2, 4] = -Awl * cogx
@@ -59,23 +60,16 @@ class EOM:
         Ck[4, 5] = (nabla - nabla) * cogy
         Ck = Ck * rho_water * grav_acc
 
-        CM, CA, Fex, body = self.solvediff(v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, self.show)
-        RAO = {}
-        for a, b in enumerate(omega.tolist()):
-            RAO_data = self.solveeom(b, Mk, np.array(CM[b]), np.array(CA[b]), Ck, Fex[b])
-            RAO_temp = []
-            for c in range(len(RAO_data)):
-                RAO_temp.append(np.round(RAO_data[c], 6).tolist())
-            RAO[a] = [item for sublist in RAO_temp for item in sublist]
+        CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
+                                     cogz, self.show)
+        RAO = self.solveeom(w_min, Mk, np.array(CM[w_min]), np.array(CA[w_min]), Ck, Fex[w_min])
+        RAO = np.round(RAO, 6).tolist()
+        RAO = [item for sublist in RAO for item in sublist]
         return RAO
         # self.animate(omega.tolist()[0], body, RAO)
         # return RAO
 
-    def solvediff(self, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, show):
-        mesh = mm.meshmaker('barge', v_l, v_b, v_t, p_l, p_w, p_h)
-        faces, vertices = mesh.barge()
-        mesh = cpt.Mesh(vertices=vertices, faces=faces)
-        body = cpt.FloatingBody(mesh=mesh, name="barge")
+    def solvediff(self, body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, show):
 
         # body.add_all_rigid_body_dofs()
         axisx = cpt.Axis(vector=(1, 0, 0), point=(cogx, cogy, cogz))
@@ -108,7 +102,7 @@ class EOM:
             F_diff[b] = dataset["diffraction_force"].values[a].tolist()
             F_fk[b] = dataset["Froude_Krylov_force"].values[a].tolist()
             Fex[b] = np.array(F_diff[b]) + np.array(F_fk[b])
-        return CM, CA, Fex, body
+        return CM, CA, Fex
 
     def solveeom(self, omega, Mk, CM, CA, Ck, Fex):
         # print(Fex)
@@ -120,5 +114,7 @@ class EOM:
         return RAO
 
     def animate(self, omega, body, RAO):
-        anim = body.animate(motion={"Surge": RAO[0.5][0], "Sway": RAO[0.5][1], "Heave": RAO[0.5][2], "Roll": RAO[0.5][3], "Pitch": RAO[0.5][4], "Yaw": RAO[0.5][5]}, loop_duration=1.0)
+        anim = body.animate(
+            motion={"Surge": RAO[0.5][0], "Sway": RAO[0.5][1], "Heave": RAO[0.5][2], "Roll": RAO[0.5][3],
+                    "Pitch": RAO[0.5][4], "Yaw": RAO[0.5][5]}, loop_duration=1.0)
         anim.run()

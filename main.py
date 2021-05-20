@@ -1,93 +1,23 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import re
 from EOM import EOM
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.stacklayout import MDStackLayout
-from kivy.properties import ObjectProperty
-from kivymd.theming import ThemableBehavior
-from kivymd.uix.list import MDList
-from kivymd.uix.label import MDLabel
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.screenmanager import Screen
 from kivymd.app import MDApp
 from kmd_setup import mainapp
 from kivy.core.window import Window
 from kivymd.uix.textfield import MDTextField
-
-Window.size = (360, 740)
+import threading
+from meshmaker import meshmaker
+import capytaine as cpt
+from kivy.properties import ObjectProperty
+import pandas as pd
+# Window.size = (360, 740)
 
 
 class pyRAOApp(MDApp):
-    class ContentNavigationDrawer(BoxLayout):
-        screen_manager = ObjectProperty()
-        # nav_drawer = ObjectProperty()
-
-    # class DrawerList(ThemableBehavior, MDList):
-    #     pass
-
-    InputValues = {}
-
-    def on_text(instance, name, value):
-        pyRAOApp.InputValues[name] = value
-        pass
-
-    RAO = []
-
-    def runDiffraction(self):
-        pyRAOApp.RAO = EOM(pyRAOApp.InputValues, show=False).solve()
-        pyRAOApp.plotRAO(self, pyRAOApp.RAO)
-        print(pyRAOApp.RAO)
-        pass
-
-    def plotRAO(self, RAO):
-        rao11 = []
-        rao22 = []
-        rao33 = []
-        rao44 = []
-        rao55 = []
-        rao66 = []
-        omega = np.linspace(float(pyRAOApp.InputValues["w_min"]), float(pyRAOApp.InputValues["w_max"]),
-                            int(pyRAOApp.InputValues["n_w"]))
-
-        for a in range(int(pyRAOApp.InputValues["n_w"])):
-            rao11.append(RAO[a][0])
-            rao22.append(RAO[a][1])
-            rao33.append(RAO[a][2])
-            rao44.append(RAO[a][3])
-            rao55.append(RAO[a][4])
-            rao66.append(RAO[a][5])
-
-        plt.figure()
-        plt.plot(omega, rao11)
-        plt.title('Surge')
-        plt.subplot(162)
-        plt.plot(omega, rao22)
-        plt.title('Sway')
-        plt.subplot(163)
-        plt.plot(omega, rao33)
-        plt.title('Heave')
-        plt.subplot(164)
-        plt.plot(omega, rao44)
-        plt.title('Roll')
-        plt.subplot(165)
-        plt.plot(omega, rao55)
-        plt.title('Pitch')
-        plt.subplot(166)
-        plt.plot(omega, rao66)
-        plt.title('Yaw')
-        plt.savefig('plot.png')
-
-    class FloatInput(MDTextField):
-        pat = re.compile('[^0-9]')
-
-        def insert_text(self, substring, from_undo=False):
-            pat = self.pat
-            if '.' in self.text:
-                s = re.sub(pat, '', substring)
-            else:
-                s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
-            return super(pyRAOApp.FloatInput, self).insert_text(s, from_undo=from_undo)
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
@@ -101,6 +31,96 @@ class pyRAOApp(MDApp):
 
     def on_start(self):
         pass
+
+    InputValues = {
+        'v_l': "100",
+        'v_b': "20",
+        'v_h': "6",
+        'v_t': "3",
+        'cogx': "50",
+        'cogy': "0",
+        'cogz': "2",
+        'p_l': "2",
+        'p_w': "2",
+        'p_h': "1",
+        'w_min': "0.05",
+        'w_max': "1.2",
+        'n_w': "10",
+        'd_min': "0",
+        'd_max': "0",
+        'n_d': "1",
+        'water_depth': "10000",
+        'rho_water': "1025",
+    }
+    RAO = [[1] * 6] * int(InputValues["n_w"])
+
+    class ContentNavigationDrawer(BoxLayout):
+        screen_manager = ObjectProperty()
+
+    def makemesh(self):
+        a = self.InputValues
+        mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
+        faces, vertices = mesh.barge()
+        mesh = cpt.Mesh(vertices=vertices, faces=faces)
+        body = cpt.FloatingBody(mesh=mesh, name="barge")
+        return body
+
+    def on_text(instance, name, value):
+        pyRAOApp.InputValues[name] = value
+        pass
+
+    def runDiffraction(self):
+        pyRAOApp.omega = np.linspace(float(pyRAOApp.InputValues["w_min"]), float(pyRAOApp.InputValues["w_max"]),
+                                     int(pyRAOApp.InputValues["n_w"]))
+        body = self.makemesh()
+        self.RAO = []
+        plotomega = []
+        plotrao = {}
+        plotrao[0] = []
+        plotrao[1] = []
+        plotrao[2] = []
+        plotrao[3] = []
+        plotrao[4] = []
+        plotrao[5] = []
+        for a, b in enumerate(self.omega):
+            self.InputValues["w_min"] = b
+            self.InputValues["w_max"] = b
+            self.InputValues["n_w"] = 1
+            self.RAO.append(EOM(body, self.InputValues, show=False).solve())
+            plotomega.append(self.omega[a])
+            plotrao[0].append(self.RAO[a][0])
+            plotrao[1].append(self.RAO[a][1])
+            plotrao[2].append(self.RAO[a][2])
+            plotrao[3].append(self.RAO[a][3])
+            plotrao[4].append(self.RAO[a][4])
+            plotrao[5].append(self.RAO[a][5])
+            self.plotRAO(plotomega, plotrao)
+        self.RAOpd = pd.DataFrame([self.RAO], columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
+
+    def plotRAO(self, omega, RAO):
+        print(omega)
+        print(RAO)
+        plt.figure()
+        plt.plot(omega, RAO[0])
+        plt.plot(omega, RAO[1])
+        plt.plot(omega, RAO[2])
+        plt.plot(omega, RAO[3])
+        plt.plot(omega, RAO[4])
+        plt.plot(omega, RAO[5])
+        plt.legend(['Surge', 'Sway', 'Heave', 'Roll', 'Pitch', 'Yaw'])
+        plt.savefig('plot.png', dpi=600)
+        plt.close()
+
+    class FloatInput(MDTextField):
+        pat = re.compile('[^0-9]')
+
+        def insert_text(self, substring, from_undo=False):
+            pat = self.pat
+            if '.' in self.text:
+                s = re.sub(pat, '', substring)
+            else:
+                s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
+            return super(self.FloatInput, self).insert_text(s, from_undo=from_undo)
 
 
 if __name__ == '__main__':

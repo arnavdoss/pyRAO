@@ -1,6 +1,7 @@
 mainapp = """
 #:import Transition kivy.uix.screenmanager.FadeTransition
 #:import MDLabel kivymd.uix.label.MDLabel
+#:import MeshLinePlot kivy_garden.graph.MeshLinePlot
 Screen:
     NavigationLayout:
         # x: toolbar.height
@@ -15,22 +16,21 @@ Screen:
                             orientation: "vertical"
                             MDBoxLayout:
                                 size_hint: 1, None
-                                height: 150
+                                height: dp(50)
                             MDBoxLayout:                    
                                 ToolbarButton:
-                                    icon: "language-python"                                    
-                                    user_font_size: "30sp"
-                                    on_press: app.runDiffraction()
+                                    icon: "settings"
                                 MDLabel:
                                     text: "Input"
                                     text_style: "H1"
                                     theme_text_color: "Primary"
-                                    font_size: "20sp"
+                                    size: self.texture_size
                                 ToolbarButton:
                                     icon: "chevron-left"
                                     on_press: screen_manager.current = "Input"
                                 ToolbarButton:
-                                    icon: "settings"
+                                    icon: "play-circle"
+                                    on_press: app.runDiffraction()
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Results"
@@ -42,73 +42,73 @@ Screen:
                         halign: "center"
                         MDStackLayout:                     
                             orientation: "lr-tb"
-                            spacing: 10
-                            padding: 20
+                            spacing: dp(10)
+                            padding: dp(20)
                             size_hint_x: 1
                             adaptive_height: True                            
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "ferry"
                                 InputText:
-                                    name: "v_l"
+                                    name: "v_l"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Length"
-                                    text: "100"                         
+                                    helper_text: "Length"                
                                 InputText:                                    
-                                    name: "v_b"
+                                    name: "v_b"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Breadth"
-                                    text: "20"
                                 InputText:
-                                    name: "v_h"
+                                    name: "v_h"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Height"
-                                    text: "6"
                                 InputText:
-                                    name: "v_t"
+                                    name: "v_t"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Draft"
-                                    text: "3"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "ferry"
                                 InputHeaderIcon:
                                     icon: "adjust"
                                 InputText:
-                                    name: "cogx"
+                                    name: "cogx"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "LCG"
-                                    text: "50"
                                 InputText:
-                                    name: "cogy"
+                                    name: "cogy"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "TCG"
-                                    text: "0"
                                 InputText:
-                                    name: "cogz"
+                                    name: "cogz"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "VCG"
-                                    text: "2"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "ferry"
                                 InputHeaderIcon:
                                     icon: "alpha-p-box-outline"
                                 InputText:
-                                    name: "p_l"
+                                    name: "p_l"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Length"
-                                    text: "2"
                                 InputText:
-                                    name: "p_w"
+                                    name: "p_w"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Width"
-                                    text: "2"
                                 InputText:
-                                    name: "p_h"
+                                    name: "p_h"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Height"
-                                    text: "1"
                                 EmptyInputText:                           
                             InputBox:
                                 InputHeaderIcon:
@@ -116,56 +116,71 @@ Screen:
                                 InputHeaderIcon:
                                     icon: "alpha-f-circle-outline"
                                 InputText:
-                                    name: "w_min"
+                                    name: "w_min"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "min"
-                                    text: "0.05"
                                 InputText:
-                                    name: "w_max"
+                                    name: "w_max"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "max"
-                                    text: "0.10"
                                 InputText:
-                                    name: "n_w"
+                                    name: "n_w"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
-                                    text: "2"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "waves"
                                 InputHeaderIcon:
                                     icon: "alpha-d-circle-outline"
                                 InputText:
-                                    name: "d_min"
+                                    name: "d_min"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "min"
-                                    text: "0"
                                 InputText:
-                                    name: "d_max"
+                                    name: "d_max"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "max"
-                                    text: "0"
                                 InputText:
-                                    name: "n_d"
+                                    name: "n_d"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
-                                    text: "1"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "waves"
                                 InputHeaderIcon:
                                     icon: "water"
                                 InputText:
-                                    name: "water_depth"
+                                    name: "water_depth"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Depth"
-                                    text: "100"
                                 InputText:
-                                    name: "rho_water"
+                                    name: "rho_water"                                    
+                                    text: app.InputValues[self.name]  
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Density"
-                                    text: "1025"
                                 EmptyInputText:
+                    MDBoxLayout:
+                        md_bg_color: app.theme_cls.primary_color
+                        adaptive_height: True
+                        BotToolbarButton:
+                            icon: "home"
+                            on_press: screen_manager.current = "Input"
+                        BotToolbarButton:
+                            icon: "pencil"
+                            on_press: screen_manager.current = "Input"
+                        BotToolbarButton:
+                            icon: "table"
+                            on_press: screen_manager.current = "Results"
+                        BotToolbarButton:
+                            icon: "help"
+                            on_press: screen_manager.current = "Results" 
                                              
             Screen:
                 name: "Results"
@@ -175,63 +190,63 @@ Screen:
                             orientation: "vertical"
                             MDBoxLayout:
                                 size_hint: 1, None
-                                height: 150
+                                height: dp(50)
                             MDBoxLayout:                    
                                 ToolbarButton:
-                                    icon: "language-python"                                    
-                                    user_font_size: "30sp"
+                                    icon: "settings"    
+                                    on_press: output.text = str(app.RAOpd)
+                                    on_press: rao_plot.reload()
                                 MDLabel:
                                     text: "Results"
                                     text_style: "H1"
                                     theme_text_color: "Primary"
-                                    font_size: "20sp"
+                                    size: self.texture_size                                 
                                 ToolbarButton:
                                     icon: "chevron-left"
                                     on_press: screen_manager.current = "Input"
                                 ToolbarButton:
-                                    icon: "settings"
-                                    
+                                    icon: "play-circle"
+                                    on_press: app.runDiffraction()
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Input"                               
 
-                    ScrollView:    
-                        do_scroll_x: False
+                    ScrollView:
                         smooth_scroll_end: 10
                         always_overscroll: False                    
                         MDBoxLayout:
                             orientation: "vertical"
+                            spacing: dp(5)
+                            padding: dp(5)
+                            size_hint: None, None
+                            size: root.width, root.height #dp(1200), dp(1200)                          
                             Image:
+                                id: rao_plot
                                 source: 'plot.png'
-                                # size_hint_x: 0.4
-                                # allow_stretch: True                     
-                            
-                
-                            
-        # # on button, use #nav_drawer.set_state("open")      
-        # MDNavigationDrawer:
-        #     id: nav_drawer
-        #     ContentNavigationDrawer:
-        #         screen_manager: screen_manager
-        #         nav_drawer: nav_drawer
-        #         ScrollView:
-        #             MDList:
-        #                 OneLineListItem:
-        #                     text: "Inputs"
-        #                     on_press:
-        #                         nav_drawer.set_state("close")
-        #                         screen_manager.current = "Input"
-        #                 OneLineListItem:
-        #                     text: "Results"
-        #                     on_press:
-        #                         nav_drawer.set_state("close")
-        #                         screen_manager.current = "Results"
+                            MDLabel:
+                                id: output       
                                 
+                    MDBoxLayout:
+                        md_bg_color: app.theme_cls.primary_color
+                        adaptive_height: True
+                        BotToolbarButton:
+                            icon: "home"
+                            on_press: screen_manager.current = "Input"
+                        BotToolbarButton:
+                            icon: "pencil"
+                            on_press: screen_manager.current = "Input"
+                        BotToolbarButton:
+                            icon: "table"
+                            on_press: screen_manager.current = "Results"
+                        BotToolbarButton:
+                            icon: "help"
+                            on_press: screen_manager.current = "Results" 
+                                        
 <InputBox@MDBoxLayout>:
-    spacing: 10
-    padding: 5                          
+    spacing: dp(10)
+    padding: dp(5)                          
     size_hint: None, None
-    size: 320, 50
+    size: dp(320), dp(50)
     halign: "center"
     canvas.before:
         Color:
@@ -244,7 +259,7 @@ Screen:
     color_mode: "accent"
     line_anim: True
     size_hint: None, None
-    size: 50, 100
+    size: dp(50), dp(100)
     helper_text_mode: "persistent"
     halign: "center"
     valign: "bottom"
@@ -254,21 +269,27 @@ Screen:
     on_text: app.FloatInput()
 <InputHeaderIcon@MDIcon>:
     size_hint: None, 1
-    width: 50
+    width: dp(50)
     theme_text_color: "Primary"
     halign: "center"
 <EmptyInputText@MDLabel>:
     halign: "center"
     size_hint: None, None
-    size: 50, 100
+    size: dp(50), dp(100)
 <ToolbarButton@MDIconButton>:
-    user_font_size: "20sp"
+    size_hint: None, 1
+    width: dp(50)
     center_y: 0.1
+    theme_text_color: "Primary"
+    halign: "center"
+<BotToolbarButton@MDIconButton>:
+    size_hint: 0.25, None
+    center_y: 0
     theme_text_color: "Primary"
     halign: "center"
 <HeaderLayout@MDBoxLayout>:
     size_hint: 1, None
-    height: 200
+    height: dp(100)
     elevation: 10
     canvas.before:
         Color:
@@ -282,5 +303,5 @@ Screen:
     size_hint: 1, 1
     valign: "top"
     md_bg_color: app.theme_cls.primary_color
-    padding: 5
+    spacing: dp(5)
 """

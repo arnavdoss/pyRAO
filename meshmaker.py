@@ -1,8 +1,7 @@
 import numpy as np
 class meshmaker:
 
-    def __init__(self, type, length, beam, draft, xres=1, yres=1, zres=0.5):
-        self.type = type
+    def __init__(self, length, beam, draft, xres, yres, zres):
         self.length = length
         self.beam = beam
         self.draft = draft
@@ -11,12 +10,12 @@ class meshmaker:
         self.zres = zres
 
     def barge(self):
-        length = self.length
-        beam = self.beam
-        draft = self.draft
-        xres = self.xres
-        yres = self.yres
-        zres = self.zres
+        length = float(self.length)
+        beam = float(self.beam)
+        draft = float(self.draft)
+        xres = float(self.xres)
+        yres = float(self.yres)
+        zres = float(self.zres)
 
         def makeface(face, locval, x, y, z):
             vertices = []

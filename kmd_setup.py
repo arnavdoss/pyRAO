@@ -1,7 +1,7 @@
 mainapp = """
 #:import Transition kivy.uix.screenmanager.FadeTransition
 #:import MDLabel kivymd.uix.label.MDLabel
-#:import MeshLinePlot kivy_garden.graph.MeshLinePlot
+#:import Clock kivy.clock.Clock
 Screen:
     NavigationLayout:
         # x: toolbar.height
@@ -30,7 +30,8 @@ Screen:
                                     on_press: screen_manager.current = "Input"
                                 ToolbarButton:
                                     icon: "play-circle"
-                                    on_press: app.runDiffraction()
+                                    on_press: screen_manager.current = "Results"
+                                    on_release: Clock.schedule_once(app.process_button_click, 1)
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Results"
@@ -51,22 +52,22 @@ Screen:
                                     icon: "ferry"
                                 InputText:
                                     name: "v_l"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Length"                
                                 InputText:                                    
                                     name: "v_b"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Breadth"
                                 InputText:
                                     name: "v_h"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Height"
                                 InputText:
                                     name: "v_t"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Draft"
                             InputBox:
@@ -76,17 +77,17 @@ Screen:
                                     icon: "adjust"
                                 InputText:
                                     name: "cogx"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "LCG"
                                 InputText:
                                     name: "cogy"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "TCG"
                                 InputText:
                                     name: "cogz"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "VCG"
                             InputBox:
@@ -96,17 +97,17 @@ Screen:
                                     icon: "alpha-p-box-outline"
                                 InputText:
                                     name: "p_l"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Length"
                                 InputText:
                                     name: "p_w"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Width"
                                 InputText:
                                     name: "p_h"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Height"
                                 EmptyInputText:                           
@@ -117,17 +118,17 @@ Screen:
                                     icon: "alpha-f-circle-outline"
                                 InputText:
                                     name: "w_min"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "min"
                                 InputText:
                                     name: "w_max"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "max"
                                 InputText:
                                     name: "n_w"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
                             InputBox:
@@ -137,17 +138,17 @@ Screen:
                                     icon: "alpha-d-circle-outline"
                                 InputText:
                                     name: "d_min"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "min"
                                 InputText:
                                     name: "d_max"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "max"
                                 InputText:
                                     name: "n_d"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
                             InputBox:
@@ -157,12 +158,12 @@ Screen:
                                     icon: "water"
                                 InputText:
                                     name: "water_depth"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Depth"
                                 InputText:
                                     name: "rho_water"                                    
-                                    text: app.InputValues[self.name]  
+                                    text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "Density"
                                 EmptyInputText:
@@ -193,9 +194,7 @@ Screen:
                                 height: dp(50)
                             MDBoxLayout:                    
                                 ToolbarButton:
-                                    icon: "settings"    
-                                    on_press: output.text = str(app.RAOpd)
-                                    on_press: rao_plot.reload()
+                                    icon: "settings"
                                 MDLabel:
                                     text: "Results"
                                     text_style: "H1"
@@ -206,26 +205,25 @@ Screen:
                                     on_press: screen_manager.current = "Input"
                                 ToolbarButton:
                                     icon: "play-circle"
-                                    on_press: app.runDiffraction()
+                                    on_press: screen_manager.current = "Results"
+                                    on_release: Clock.schedule_once(app.process_button_click, 0.1)
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Input"                               
 
                     ScrollView:
+                        do_scroll_x: False
                         smooth_scroll_end: 10
-                        always_overscroll: False                    
-                        MDBoxLayout:
-                            orientation: "vertical"
-                            spacing: dp(5)
-                            padding: dp(5)
+                        always_overscroll: False             
+                        MDStackLayout:
+                            spacing: dp(10)
+                            padding: dp(20)
                             size_hint: None, None
-                            size: root.width, root.height #dp(1200), dp(1200)                          
-                            Image:
-                                id: rao_plot
-                                source: 'plot.png'
-                            MDLabel:
-                                id: output       
-                                
+                            width: Window.width
+                            Label:
+                            updlbl:
+                            
+                                                                       
                     MDBoxLayout:
                         md_bg_color: app.theme_cls.primary_color
                         adaptive_height: True
@@ -241,7 +239,18 @@ Screen:
                         BotToolbarButton:
                             icon: "help"
                             on_press: screen_manager.current = "Results" 
-                                        
+<updlbl>:
+    orientation: 'vertical'
+    size_hint: None, None
+    width: Window.width
+    adaptive_height: True
+    Image:
+        id: rao_plot
+        source: 'plot.png'
+        size: dp(500), dp(500)
+    MDLabel:
+        id: updlbl
+                      
 <InputBox@MDBoxLayout>:
     spacing: dp(10)
     padding: dp(5)                          

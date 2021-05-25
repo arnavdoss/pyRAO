@@ -32,20 +32,21 @@ class updlbl(MDBoxLayout):
 
     def __init__(self, **kwargs):
         super(updlbl, self).__init__(**kwargs)
-        Clock.schedule_interval(self.upd, 1)
+        # Clock.schedule_interval(self.upd, 1)
 
     def upd(self, *args):
-        self.ids.updlbl.text = str(MainApp.RAOpd)
+        self.ids.updlbl.text = str("MainApp.run_diff.RAOpd")
         self.ids.rao_plot.reload()
 
 
 class RunDiff(MDBoxLayout):
 
-    RAOpd = []
+    # RAOpd = []
     progress = 0
 
     def __init__(self, **kwargs):
         super(RunDiff, self).__init__(**kwargs)
+        self.RAOpd = []
         self.calculation_trigger = Clock.create_trigger(self.calculation)
 
     def initialize_calc(self, *args):
@@ -69,7 +70,7 @@ class RunDiff(MDBoxLayout):
 
         self.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
         self.RAOpd.insert(0, "Omega", self.omegas, True)
-        print(self.RAOpd)
+        self.updlabel()
 
         if float(self.inputs["w_min"]) < float(MainApp.Values["w_max"]):
             self.counter += 1
@@ -79,6 +80,9 @@ class RunDiff(MDBoxLayout):
     def updbar(self, *args):
         self.ids.progbar.value = self.progress
 
+    def updlabel(self, *args):
+        self.ids.results_label.text = str(self.RAOpd)
+
     def makemesh(self):
         a = MainApp.Values
         mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
@@ -86,7 +90,6 @@ class RunDiff(MDBoxLayout):
         mesh = cpt.Mesh(vertices=vertices, faces=faces)
         body = cpt.FloatingBody(mesh=mesh, name="barge")
         return body
-
 
 class MainApp(MDApp):
     Values = {
@@ -110,7 +113,8 @@ class MainApp(MDApp):
         'rho_water': "1025",
     }
     AppInputs = Values.copy()
-    RAOpd = RunDiff.RAOpd
+    run_diff = RunDiff()
+    results = updlbl()
 
     def on_text(self, name, value):
         self.Values[name] = value

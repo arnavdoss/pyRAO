@@ -28,18 +28,10 @@ Screen:
                                     theme_text_color: "Primary"
                                     size: self.texture_size
                                 ToolbarButton:
-                                    icon: "chevron-left"
-                                    on_press: screen_manager.current = "Input"                              
-                                RunDiff:
-                                ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Results"
 
-                    ScrollView:    
-                        do_scroll_x: False
-                        smooth_scroll_end: 10
-                        always_overscroll: False
-                        halign: "center"
+                    MyScroll:
                         MDStackLayout:                     
                             orientation: "lr-tb"
                             spacing: dp(10)
@@ -194,6 +186,7 @@ Screen:
                             MDBoxLayout:                    
                                 ToolbarButton:
                                     icon: "settings"
+                                    on_press: rl.text = str(app.run_diff.RAOpd)
                                 MDLabel:
                                     text: "Results"
                                     text_style: "H1"
@@ -201,23 +194,9 @@ Screen:
                                     size: self.texture_size                                 
                                 ToolbarButton:
                                     icon: "chevron-left"
-                                    on_press: screen_manager.current = "Input"
-                                RunDiff:                                
-                                ToolbarButton:
-                                    icon: "chevron-right"
-                                    on_press: screen_manager.current = "Input"                               
+                                    on_press: screen_manager.current = "Input"                            
 
-                    ScrollView:
-                        do_scroll_x: False
-                        smooth_scroll_end: 10
-                        always_overscroll: False             
-                        MDStackLayout:
-                            spacing: dp(10)
-                            padding: dp(20)
-                            size_hint: None, None
-                            width: Window.width
-                            Label:
-                            updlbl:
+                    RunDiff:
                             
 
                     MDBoxLayout:
@@ -236,32 +215,29 @@ Screen:
                             icon: "help"
                             on_press: screen_manager.current = "Results" 
 <RunDiff>:
-    MDIconButton:
-        id: RunDiff
-        size_hint: None, 1
-        width: dp(50)
-        center_y: 0.1
-        theme_text_color: "Primary"
+    orientation: "vertical"
+    spacing: dp(5)
+    padding: dp(10)
+    InputBox:        
+        size_hint: 1, None
+        height: dp(50)
         halign: "center"
-        icon: "play"
-        on_press: root.initialize_calc()
-    MDProgressBar:
-        id: progbar
-        
-
-<updlbl>:
-    orientation: 'vertical'
-    size_hint: None, None
-    width: Window.width
-    adaptive_height: True
-    Image:
-        id: rao_plot
-        source: 'plot.png'
-        size: dp(500), dp(500)
-    MDLabel:
-        id: updlbl
-        text: str(app.RAOpd)
-        width: dp(100)
+        MDIconButton:
+            id: RunDiff
+            size_hint: None, 1
+            width: dp(50)
+            center_y: 0.1
+            theme_text_color: "Primary"
+            halign: "center"
+            icon: "play-outline"
+            on_press: root.initialize_calc()
+        MDProgressBar:
+            id: progbar
+            color: app.theme_cls.accent_color
+    MyScroll:
+        MDLabel:
+            id: results_label
+            # bind: root.update()
 
 <InputBox@MDBoxLayout>:
     spacing: dp(10)
@@ -325,4 +301,9 @@ Screen:
     valign: "top"
     md_bg_color: app.theme_cls.primary_color
     spacing: dp(5)
+<MyScroll@ScrollView>:    
+    do_scroll_x: False
+    smooth_scroll_end: 10
+    always_overscroll: False
+    halign: "center"
 """

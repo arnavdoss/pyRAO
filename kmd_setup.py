@@ -2,7 +2,9 @@ mainapp = """
 #:import Transition kivy.uix.screenmanager.FadeTransition
 #:import MDLabel kivymd.uix.label.MDLabel
 #:import Clock kivy.clock.Clock
+#:import Thread threading.Thread
 Screen:
+    id: "MainScreen"
     NavigationLayout:
         # x: toolbar.height
         ScreenManager:
@@ -27,11 +29,8 @@ Screen:
                                     size: self.texture_size
                                 ToolbarButton:
                                     icon: "chevron-left"
-                                    on_press: screen_manager.current = "Input"
-                                ToolbarButton:
-                                    icon: "play-circle"
-                                    on_press: screen_manager.current = "Results"
-                                    on_release: Clock.schedule_once(app.process_button_click, 1)
+                                    on_press: screen_manager.current = "Input"                              
+                                RunDiff:
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Results"
@@ -182,7 +181,7 @@ Screen:
                         BotToolbarButton:
                             icon: "help"
                             on_press: screen_manager.current = "Results" 
-                                             
+
             Screen:
                 name: "Results"
                 ScreenLayout:
@@ -203,10 +202,7 @@ Screen:
                                 ToolbarButton:
                                     icon: "chevron-left"
                                     on_press: screen_manager.current = "Input"
-                                ToolbarButton:
-                                    icon: "play-circle"
-                                    on_press: screen_manager.current = "Results"
-                                    on_release: Clock.schedule_once(app.process_button_click, 0.1)
+                                RunDiff:                                
                                 ToolbarButton:
                                     icon: "chevron-right"
                                     on_press: screen_manager.current = "Input"                               
@@ -223,7 +219,7 @@ Screen:
                             Label:
                             updlbl:
                             
-                                                                       
+
                     MDBoxLayout:
                         md_bg_color: app.theme_cls.primary_color
                         adaptive_height: True
@@ -239,6 +235,20 @@ Screen:
                         BotToolbarButton:
                             icon: "help"
                             on_press: screen_manager.current = "Results" 
+<RunDiff>:
+    MDIconButton:
+        id: RunDiff
+        size_hint: None, 1
+        width: dp(50)
+        center_y: 0.1
+        theme_text_color: "Primary"
+        halign: "center"
+        icon: "play"
+        on_press: root.initialize_calc()
+    MDProgressBar:
+        id: progbar
+        
+
 <updlbl>:
     orientation: 'vertical'
     size_hint: None, None
@@ -250,7 +260,9 @@ Screen:
         size: dp(500), dp(500)
     MDLabel:
         id: updlbl
-                      
+        text: str(app.RAOpd)
+        width: dp(100)
+
 <InputBox@MDBoxLayout>:
     spacing: dp(10)
     padding: dp(5)                          

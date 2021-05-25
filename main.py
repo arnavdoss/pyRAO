@@ -10,23 +10,83 @@ from kmd_setup import mainapp
 from kivymd.uix.button import MDIconButton
 from kivy.core.window import Window
 from kivymd.uix.textfield import MDTextField
-import threading, time
+import time
+from threading import Thread
 from meshmaker import meshmaker
 import capytaine as cpt
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 import pandas as pd
+from kivymd.uix.progressbar import MDProgressBar
 import time
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivymd.uix.label import MDLabel
+
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.factory import Factory
 import multiprocessing
 from kivy.clock import mainthread, Clock
 
+class updlbl(MDBoxLayout):
 
-# Window.size = (360, 740)
+    def __init__(self, **kwargs):
+        super(updlbl, self).__init__(**kwargs)
+        Clock.schedule_interval(self.upd, 1)
+
+    def upd(self, *args):
+        self.ids.updlbl.text = str(MainApp.RAOpd)
+        self.ids.rao_plot.reload()
+
+
+class RunDiff(MDBoxLayout):
+
+    RAOpd = []
+    progress = 0
+
+    def __init__(self, **kwargs):
+        super(RunDiff, self).__init__(**kwargs)
+        self.calculation_trigger = Clock.create_trigger(self.calculation)
+
+    def initialize_calc(self, *args):
+        self.body = self.makemesh()
+        self.omega = np.linspace(float(MainApp.Values["w_min"]), float(MainApp.Values["w_max"]),
+                                 int(MainApp.Values["n_w"]))
+        self.counter = 0
+        self.omegas = []
+        self.RAO = []
+        self.inputs = MainApp.Values.copy()
+        self.inputs["n_w"] = 1
+        self.calculation_trigger()
+
+    def calculation(self, *args):
+        self.inputs["w_min"] = self.omega[self.counter]
+        self.omegas.append(self.omega[self.counter])
+        self.RAO.append(EOM(self.body, self.inputs, show=False).solve())
+
+        self.progress = (int(self.counter + 1) / int(MainApp.Values["n_w"])) * 100
+        self.updbar()
+
+        self.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
+        self.RAOpd.insert(0, "Omega", self.omegas, True)
+        print(self.RAOpd)
+
+        if float(self.inputs["w_min"]) < float(MainApp.Values["w_max"]):
+            self.counter += 1
+            self.calculation_trigger()
+
+
+    def updbar(self, *args):
+        self.ids.progbar.value = self.progress
+
+    def makemesh(self):
+        a = MainApp.Values
+        mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
+        faces, vertices = mesh.barge()
+        mesh = cpt.Mesh(vertices=vertices, faces=faces)
+        body = cpt.FloatingBody(mesh=mesh, name="barge")
+        return body
+
 
 class MainApp(MDApp):
     Values = {
@@ -50,36 +110,7 @@ class MainApp(MDApp):
         'rho_water': "1025",
     }
     AppInputs = Values.copy()
-    RAOpd = "No diffraction run yet"
-
-    def process_button_click(self, arg):
-        self.RAO = []
-        self.body = self.makemesh()
-        self.omega = np.linspace(float(self.Values["w_min"]), float(self.Values["w_max"]),
-                                 int(self.Values["n_w"]))
-        self.counter = 0
-        omegas = []
-        while self.counter <= int(self.Values["n_w"])-1:
-            inputs = self.Values.copy()
-            inputs["w_min"] = self.omega[self.counter]
-            inputs["n_w"] = 1
-            omegas.append(self.omega[self.counter])
-            self.calculation(self.RAO, self.body, inputs)
-            MainApp.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
-            MainApp.RAOpd.insert(0, "Omega", omegas, True)
-            self.counter += 1
-            print(MainApp.RAOpd)
-
-    def calculation(self, RAO, body, inputs):
-        RAO.append(EOM(body, inputs, show=False).solve())
-
-    def makemesh(self):
-        a = self.Values
-        mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
-        faces, vertices = mesh.barge()
-        mesh = cpt.Mesh(vertices=vertices, faces=faces)
-        body = cpt.FloatingBody(mesh=mesh, name="barge")
-        return body
+    RAOpd = RunDiff.RAOpd
 
     def on_text(self, name, value):
         self.Values[name] = value
@@ -106,18 +137,6 @@ class MainApp(MDApp):
         self.theme_cls.accent_palette = "LightBlue"
         build = Builder.load_string(mainapp)
         return build
-
-
-class updlbl(MDBoxLayout):
-
-    def __init__(self, **kwargs):
-        super(updlbl, self).__init__(**kwargs)
-        Clock.schedule_interval(self.upd, 1)
-        pass
-
-    def upd(self, txt):
-        self.ids.updlbl.text = str(MainApp.RAOpd)
-        self.ids.rao_plot.reload()
 
 
 if __name__ == '__main__':

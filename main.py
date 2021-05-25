@@ -4,30 +4,14 @@ import re
 from EOM import EOM
 from kivy.lang import Builder
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivy.uix.screenmanager import Screen
 from kivymd.app import MDApp
 from kmd_setup import mainapp
-from kivymd.uix.button import MDIconButton
-from kivy.core.window import Window
 from kivymd.uix.textfield import MDTextField
-import time
-from threading import Thread
 from meshmaker import meshmaker
 import capytaine as cpt
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty
+from kivy.properties import ObjectProperty
 import pandas as pd
-from kivy.graphics.texture import Texture
-from kivymd.uix.progressbar import MDProgressBar
-import time
-from kivy.uix.label import Label
-from kivy.uix.widget import Widget
-from kivymd.uix.label import MDLabel
-
-from kivy.uix.popup import Popup
 from kivy.clock import Clock
-from kivy.factory import Factory
-import multiprocessing
-from kivy.clock import mainthread, Clock
 
 class updlbl(MDBoxLayout):
 

@@ -16,6 +16,7 @@ from meshmaker import meshmaker
 import capytaine as cpt
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 import pandas as pd
+from kivy.graphics.texture import Texture
 from kivymd.uix.progressbar import MDProgressBar
 import time
 from kivy.uix.label import Label
@@ -59,6 +60,8 @@ class RunDiff(MDBoxLayout):
         self.inputs = MainApp.Values.copy()
         self.inputs["n_w"] = 1
         self.calculation_trigger()
+        self.ids.textbox.size_hint = 1, None
+        self.ids.textbox.height = (int(MainApp.Values["n_w"])*45)
 
     def calculation(self, *args):
         self.inputs["w_min"] = self.omega[self.counter]
@@ -72,16 +75,34 @@ class RunDiff(MDBoxLayout):
         self.RAOpd.insert(0, "Omega", self.omegas, True)
         self.updlabel()
 
+        ax = plt.gca()
+        self.RAOpd.plot(kind='line', x='Omega', y='Surge', ax=ax)
+        self.RAOpd.plot(kind='line', x='Omega', y='Sway', ax=ax)
+        self.RAOpd.plot(kind='line', x='Omega', y='Heave', ax=ax)
+        plt.savefig('plot_DOF123.png')
+        plt.cla()
+
+        ax = plt.gca()
+        self.RAOpd.plot(kind='line', x='Omega', y='Roll', ax=ax)
+        self.RAOpd.plot(kind='line', x='Omega', y='Pitch', ax=ax)
+        self.RAOpd.plot(kind='line', x='Omega', y='Yaw', ax=ax)
+        plt.savefig('plot_DOF456.png')
+        plt.cla()
+        self.updplot()
+
         if float(self.inputs["w_min"]) < float(MainApp.Values["w_max"]):
             self.counter += 1
             self.calculation_trigger()
-
 
     def updbar(self, *args):
         self.ids.progbar.value = self.progress
 
     def updlabel(self, *args):
         self.ids.results_label.text = str(self.RAOpd)
+
+    def updplot(self, *args):
+        self.ids.plot_DOF123.reload()
+        self.ids.plot_DOF456.reload()
 
     def makemesh(self):
         a = MainApp.Values

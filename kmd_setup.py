@@ -186,7 +186,6 @@ Screen:
                             MDBoxLayout:                    
                                 ToolbarButton:
                                     icon: "settings"
-                                    on_press: rl.text = str(app.run_diff.RAOpd)
                                 MDLabel:
                                     text: "Results"
                                     text_style: "H1"
@@ -235,9 +234,31 @@ Screen:
             id: progbar
             color: app.theme_cls.accent_color
     MyScroll:
-        MDLabel:
-            id: results_label
-            # bind: root.update()
+        MDStackLayout:        
+            id: resultsbox             
+            orientation: "lr-tb"
+            spacing: dp(10)
+            adaptive_height: True
+            size_hint_x: 1
+            InputBox:
+                size: dp(320), dp(260)
+                Image:
+                    id: plot_DOF123
+                    source: 'plot_DOF123.png'
+            InputBox:
+                size: dp(320), dp(260)
+                Image:
+                    id: plot_DOF456
+                    source: 'plot_DOF456.png'
+            MDBoxLayout:
+                orientation: "vertical"
+                id: textbox
+                adaptive_height: True
+                padding: dp(10)
+                MDLabel:
+                    id: results_label
+                    # pos_hint: {'right':1, 'top':2}
+            
 
 <InputBox@MDBoxLayout>:
     spacing: dp(10)

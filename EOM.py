@@ -18,14 +18,15 @@ class EOM:
         cogx = self.inputs["cogx"]
         cogy = self.inputs["cogy"]
         cogz = self.inputs["cogz"]
+        KG = cogz + v_t
         p_l = self.inputs["p_l"]
         p_w = self.inputs["p_w"]
         p_h = self.inputs["p_h"]
-        w_min = self.inputs["w_min"]
-        w_max = self.inputs["w_max"]
-        n_w = self.inputs["n_w"]
-        d_min = self.inputs["d_min"]
-        d_max = self.inputs["d_max"]
+        w_min = (2*np.pi)/self.inputs["t_min"]
+        w_max = (2*np.pi)/self.inputs["t_max"]
+        n_w = self.inputs["n_t"]
+        d_min = np.deg2rad(self.inputs["d_min"])
+        d_max = np.deg2rad(self.inputs["d_max"])
         n_d = self.inputs["n_d"]
         water_depth = self.inputs["water_depth"]
         rho_water = self.inputs["rho_water"]
@@ -48,8 +49,8 @@ class EOM:
 
         Ck = np.zeros((6, 6))
         Ck[2, 2] = Awl
-        Ck[3, 3] = -(nabla * cogz) + (nabla * cobz) + (1 / 12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
-        Ck[4, 4] = -(nabla * cogz) + (nabla * cobz) + (1 / 12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
+        Ck[3, 3] = -(nabla * KG) + (nabla * cobz) + (1 / 12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
+        Ck[4, 4] = -(nabla * KG) + (nabla * cobz) + (1 / 12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
         Ck[2, 3] = Awl * cogy
         Ck[3, 2] = Ck[2, 3]
         Ck[2, 4] = -Awl * cogx
@@ -63,7 +64,7 @@ class EOM:
         CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz, self.show)
         RAO = self.solveeom(w_min, Mk, np.array(CM[w_min]), np.array(CA[w_min]), Ck, Fex[w_min])
-        RAO = np.round(RAO, 6).tolist()
+        RAO = RAO.tolist()
         RAO = [item for sublist in RAO for item in sublist]
         return RAO
         # self.animate(omega.tolist()[0], body, RAO)

@@ -45,22 +45,22 @@ Screen:
                                     name: "v_l"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Length"                
+                                    helper_text: "Length [m]"                
                                 InputText:                                    
                                     name: "v_b"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Breadth"
+                                    helper_text: "Breadth [m]"
                                 InputText:
                                     name: "v_h"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Height"
+                                    helper_text: "Height [m]"
                                 InputText:
                                     name: "v_t"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Draft"
+                                    helper_text: "Draft [m]"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "ferry"
@@ -70,17 +70,17 @@ Screen:
                                     name: "cogx"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "LCG"
+                                    helper_text: "LCG [m]"
                                 InputText:
                                     name: "cogy"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "TCG"
+                                    helper_text: "TCG [m]"
                                 InputText:
                                     name: "cogz"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "VCG"
+                                    helper_text: "VCG [m]"
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "ferry"
@@ -90,35 +90,35 @@ Screen:
                                     name: "p_l"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Length"
+                                    helper_text: "Length [m]"
                                 InputText:
                                     name: "p_w"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Width"
+                                    helper_text: "Width [m]"
                                 InputText:
                                     name: "p_h"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Height"
+                                    helper_text: "Height [m]"
                                 EmptyInputText:                           
                             InputBox:
                                 InputHeaderIcon:
                                     icon: "waves"
                                 InputHeaderIcon:
-                                    icon: "alpha-f-circle-outline"
+                                    icon: "alpha-t-circle-outline"
                                 InputText:
-                                    name: "w_min"                                    
+                                    name: "t_min"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "min"
+                                    helper_text: "min [s]"
                                 InputText:
-                                    name: "w_max"                                    
+                                    name: "t_max"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "max"
+                                    helper_text: "max [s]"
                                 InputText:
-                                    name: "n_w"                                    
+                                    name: "n_t"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
                                     helper_text: "n"
@@ -131,12 +131,12 @@ Screen:
                                     name: "d_min"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "min"
+                                    helper_text: "min [deg]"
                                 InputText:
                                     name: "d_max"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "max"
+                                    helper_text: "max [deg]"
                                 InputText:
                                     name: "n_d"                                    
                                     text: app.AppInputs[self.name]
@@ -151,12 +151,12 @@ Screen:
                                     name: "water_depth"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Depth"
+                                    helper_text: "Depth [m]"
                                 InputText:
                                     name: "rho_water"                                    
                                     text: app.AppInputs[self.name]
                                     bind: app.on_text(self.name, self.text)
-                                    helper_text: "Density"
+                                    helper_text: "Density [kg/m^3]"
                                 EmptyInputText:
                     MDBoxLayout:
                         md_bg_color: app.theme_cls.primary_color
@@ -241,15 +241,10 @@ Screen:
             adaptive_height: True
             size_hint_x: 1
             InputBox:
-                size: dp(320), dp(260)
+                size: root.width*0.98, root.height
                 Image:
-                    id: plot_DOF123
-                    source: 'plot_DOF123.png'
-            InputBox:
-                size: dp(320), dp(260)
-                Image:
-                    id: plot_DOF456
-                    source: 'plot_DOF456.png'
+                    id: plot
+                    source: 'plot.png'
             MDBoxLayout:
                 orientation: "vertical"
                 id: textbox

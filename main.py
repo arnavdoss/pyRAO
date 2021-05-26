@@ -13,68 +13,55 @@ from kivy.properties import ObjectProperty
 import pandas as pd
 from kivy.clock import Clock
 
-class updlbl(MDBoxLayout):
-
-    def __init__(self, **kwargs):
-        super(updlbl, self).__init__(**kwargs)
-        # Clock.schedule_interval(self.upd, 1)
-
-    def upd(self, *args):
-        self.ids.updlbl.text = str("MainApp.run_diff.RAOpd")
-        self.ids.rao_plot.reload()
-
-
 class RunDiff(MDBoxLayout):
-
-    # RAOpd = []
-    progress = 0
+    # progress = 0
 
     def __init__(self, **kwargs):
         super(RunDiff, self).__init__(**kwargs)
+        self.progress = 0
         self.RAOpd = []
         self.calculation_trigger = Clock.create_trigger(self.calculation)
 
     def initialize_calc(self, *args):
         self.body = self.makemesh()
-        self.omega = np.linspace(float(MainApp.Values["w_min"]), float(MainApp.Values["w_max"]),
-                                 int(MainApp.Values["n_w"]))
+        self.omega = np.linspace(float(MainApp.Values["t_min"]), float(MainApp.Values["t_max"]),
+                                 int(MainApp.Values["n_t"]))
         self.counter = 0
         self.omegas = []
         self.RAO = []
         self.inputs = MainApp.Values.copy()
-        self.inputs["n_w"] = 1
+        self.inputs["n_t"] = 1
         self.calculation_trigger()
         self.ids.textbox.size_hint = 1, None
-        self.ids.textbox.height = (int(MainApp.Values["n_w"])*45)
+        self.ids.textbox.height = (int(MainApp.Values["n_t"]) * 45)
+        pd.options.display.precision = 1
+        pd.set_option('display.colheader_justify', 'center')
+        pd.options.display.max_columns = None
+        pd.options.display.max_rows = None
+        pd.options.display.width = None
 
     def calculation(self, *args):
-        self.inputs["w_min"] = self.omega[self.counter]
+        self.inputs["t_min"] = self.omega[self.counter]
         self.omegas.append(self.omega[self.counter])
         self.RAO.append(EOM(self.body, self.inputs, show=False).solve())
 
-        self.progress = (int(self.counter + 1) / int(MainApp.Values["n_w"])) * 100
+        self.progress = (int(self.counter + 1) / int(MainApp.Values["n_t"])) * 100
         self.updbar()
 
         self.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
         self.RAOpd.insert(0, "Omega", self.omegas, True)
+        self.RAOpd_string = self.RAOpd.to_string()
         self.updlabel()
 
-        ax = plt.gca()
-        self.RAOpd.plot(kind='line', x='Omega', y='Surge', ax=ax)
-        self.RAOpd.plot(kind='line', x='Omega', y='Sway', ax=ax)
-        self.RAOpd.plot(kind='line', x='Omega', y='Heave', ax=ax)
-        plt.savefig('plot_DOF123.png')
-        plt.cla()
-
-        ax = plt.gca()
-        self.RAOpd.plot(kind='line', x='Omega', y='Roll', ax=ax)
-        self.RAOpd.plot(kind='line', x='Omega', y='Pitch', ax=ax)
-        self.RAOpd.plot(kind='line', x='Omega', y='Yaw', ax=ax)
-        plt.savefig('plot_DOF456.png')
-        plt.cla()
+        plt.figure()
+        ax = self.RAOpd.plot(x='Omega', y=['Surge', 'Sway', 'Heave', 'Roll', 'Pitch', 'Yaw'],
+                             secondary_y=['Roll', 'Pitch', 'Yaw'], grid=True)
+        ax.set_ylabel('Translational RAO [m/m]')
+        ax.right_ax.set_ylabel('Rotational RAO [rad/m]')
+        plt.savefig('plot.png'); plt.cla(); plt.clf()
         self.updplot()
 
-        if float(self.inputs["w_min"]) < float(MainApp.Values["w_max"]):
+        if float(self.inputs["t_min"]) < float(MainApp.Values["t_max"]):
             self.counter += 1
             self.calculation_trigger()
 
@@ -82,11 +69,11 @@ class RunDiff(MDBoxLayout):
         self.ids.progbar.value = self.progress
 
     def updlabel(self, *args):
-        self.ids.results_label.text = str(self.RAOpd)
+        # pdtabulate = lambda df: tabulate(df, headers='keys', tablefmt='psql')
+        self.ids.results_label.text = self.RAOpd_string
 
     def updplot(self, *args):
-        self.ids.plot_DOF123.reload()
-        self.ids.plot_DOF456.reload()
+        self.ids.plot.reload()
 
     def makemesh(self):
         a = MainApp.Values
@@ -96,30 +83,30 @@ class RunDiff(MDBoxLayout):
         body = cpt.FloatingBody(mesh=mesh, name="barge")
         return body
 
+
 class MainApp(MDApp):
     Values = {
-        'v_l': "100",
-        'v_b': "20",
-        'v_h': "6",
-        'v_t': "3",
-        'cogx': "50",
+        'v_l': "122",
+        'v_b': "32",
+        'v_h': "8",
+        'v_t': "4.875",
+        'cogx': "0",
         'cogy': "0",
-        'cogz': "2",
-        'p_l': "2",
-        'p_w': "2",
-        'p_h': "1",
-        'w_min': "0.05",
-        'w_max': "1.2",
-        'n_w': "5",
+        'cogz': "15",
+        'p_l': "4",
+        'p_w': "4",
+        'p_h': "4",
+        't_min': "4",
+        't_max': "30",
+        'n_t': "10",
         'd_min': "0",
         'd_max': "0",
         'n_d': "1",
-        'water_depth': "10000",
+        'water_depth': "347.8",
         'rho_water': "1025",
     }
     AppInputs = Values.copy()
     run_diff = RunDiff()
-    results = updlbl()
 
     def on_text(self, name, value):
         self.Values[name] = value

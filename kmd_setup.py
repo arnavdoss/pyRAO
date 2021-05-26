@@ -256,10 +256,10 @@ Screen:
             
 
 <InputBox@MDBoxLayout>:
-    spacing: dp(10)
+    spacing: dp(15)
     padding: dp(5)                          
     size_hint: None, None
-    size: dp(320), dp(50)
+    size: dp(340), dp(50)
     halign: "center"
     canvas.before:
         Color:

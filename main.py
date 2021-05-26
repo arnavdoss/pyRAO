@@ -53,12 +53,14 @@ class RunDiff(MDBoxLayout):
         self.RAOpd_string = self.RAOpd.to_string()
         self.updlabel()
 
-        plt.figure()
         ax = self.RAOpd.plot(x='Omega', y=['Surge', 'Sway', 'Heave', 'Roll', 'Pitch', 'Yaw'],
                              secondary_y=['Roll', 'Pitch', 'Yaw'], grid=True)
         ax.set_ylabel('Translational RAO [m/m]')
         ax.right_ax.set_ylabel('Rotational RAO [rad/m]')
-        plt.savefig('plot.png'); plt.cla(); plt.clf()
+        plt.savefig('plot.png')
+        plt.cla()
+        plt.clf()
+        plt.close()
         self.updplot()
 
         if float(self.inputs["t_min"]) < float(MainApp.Values["t_max"]):

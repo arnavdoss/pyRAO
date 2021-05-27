@@ -196,7 +196,7 @@ Screen:
                                     on_press: screen_manager.current = "Input"                            
 
                     RunDiff:
-                            
+
 
                     MDBoxLayout:
                         md_bg_color: app.theme_cls.primary_color
@@ -241,7 +241,7 @@ Screen:
             adaptive_height: True
             size_hint_x: 1
             InputBox:
-                size: root.width*0.98, root.height
+                size: dp(390), dp(320)
                 Image:
                     id: plot
                     source: 'plot.png'
@@ -252,14 +252,15 @@ Screen:
                 padding: dp(10)
                 MDLabel:
                     id: results_label
+                    font_size: sp(12)
                     # pos_hint: {'right':1, 'top':2}
-            
+
 
 <InputBox@MDBoxLayout>:
-    spacing: dp(15)
+    spacing: dp(25)
     padding: dp(5)                          
     size_hint: None, None
-    size: dp(340), dp(50)
+    size: dp(380), dp(50)
     halign: "center"
     canvas.before:
         Color:
@@ -296,8 +297,9 @@ Screen:
     theme_text_color: "Primary"
     halign: "center"
 <BotToolbarButton@MDIconButton>:
-    size_hint: 0.25, None
+    size_hint: 0.25*Window.width, None
     center_y: 0
+    center_x: 0.5
     theme_text_color: "Primary"
     halign: "center"
 <HeaderLayout@MDBoxLayout>:

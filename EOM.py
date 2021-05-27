@@ -46,6 +46,12 @@ class EOM:
         Mk[3, 3] = (1 / 12) * (v_b ** 2 + v_h ** 2) * mass
         Mk[4, 4] = (1 / 12) * (v_h ** 2 + v_l ** 2) * mass
         Mk[5, 5] = (1 / 12) * (v_l ** 2 + v_b ** 2) * mass
+        Mk[4, 5] = -(1 / 12) * (v_l * v_h) * mass
+        Mk[5, 3] = Mk[4, 5]
+        # Mk[5, 4] = -(1 / 12) * (v_b * v_h) * mass
+        # Mk[4, 3] = Mk[5, 4]
+
+
 
         Ck = np.zeros((6, 6))
         Ck[2, 2] = Awl

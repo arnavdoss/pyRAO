@@ -33,8 +33,8 @@ class RunDiff(MDBoxLayout):
         self.inputs["n_t"] = 1
         self.calculation_trigger()
         self.ids.textbox.size_hint = 1, None
-        self.ids.textbox.height = (int(MainApp.Values["n_t"]) * 45)
-        pd.options.display.precision = 1
+        self.ids.textbox.height = (int(MainApp.Values["n_t"]) * 50)
+        pd.options.display.precision = 2
         pd.set_option('display.colheader_justify', 'center')
         pd.options.display.max_columns = None
         pd.options.display.max_rows = None
@@ -49,15 +49,17 @@ class RunDiff(MDBoxLayout):
         self.updbar()
 
         self.RAOpd = pd.DataFrame(self.RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
-        self.RAOpd.insert(0, "Omega", self.omegas, True)
+        self.RAOpd.insert(0, "Period", self.omegas, True)
         self.RAOpd_string = self.RAOpd.to_string()
         self.updlabel()
 
-        ax = self.RAOpd.plot(x='Omega', y=['Surge', 'Sway', 'Heave', 'Roll', 'Pitch', 'Yaw'],
+        ax = self.RAOpd.plot(x='Period', y=['Surge', 'Sway', 'Heave', 'Roll', 'Pitch', 'Yaw'],
                              secondary_y=['Roll', 'Pitch', 'Yaw'], grid=True)
         ax.set_ylabel('Translational RAO [m/m]')
         ax.right_ax.set_ylabel('Rotational RAO [rad/m]')
-        plt.savefig('plot.png')
+        ax.set_xlabel('Period [s]')
+        ax.set_title('RAO')
+        plt.savefig('plot.png', dpi= 500)
         plt.cla()
         plt.clf()
         plt.close()

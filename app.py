@@ -13,26 +13,45 @@ import numpy as np
 from EOM import EOM
 from meshmaker import meshmaker
 import dash_bootstrap_components as dbc
+from jupyter_dash import JupyterDash
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+# app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+
+Aqua = '#00ADEF'
+Navy = '#00306B'
+Gray = '#EBE9E9'
+Signal = 'DD1C1A'
 
 tabs_styles = {
     'height': '44px'
 }
 tab_style = {
-    'borderBottom': '1px solid #d6d6d6',
+    'borderBottom': '1px solid #EBE9E9',
     'padding': '6px',
     'fontWeight': 'bold'
 }
 
 tab_selected_style = {
-    'borderTop': '1px solid #d6d6d6',
-    'borderBottom': '1px solid #d6d6d6',
-    'backgroundColor': '#119DFF',
+    'borderTop': '1px solid #EBE9E9',
+    'borderBottom': '1px solid #EBE9E9',
+    'backgroundColor': Aqua,
     'color': 'white',
-    'padding': '6px'
+    'padding': '6px',
+    'fontWeight': 'bold'
+}
+
+button_style = {
+    'backgroundColor': 'white',
+    'border': '1px solid #EBE9E9'
+}
+
+input_style = {
+    'width': '100px',
+    'border': '1px solid #EBE9E9',
+    'textAlign': 'center'
 }
 
 app.layout = dbc.Container(
@@ -43,13 +62,15 @@ app.layout = dbc.Container(
                     dbc.CardBody([
                         dbc.Row([
                             dbc.Col([
-                                html.H1('pyRAO'),
-                                html.H5('Open-source diffraction app with Capytaine & Dash')
-                            ], width=4, align='start'),
+                                html.Img(
+                                    src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
+                                    alt="Python Logo", width="75%"),
+                            ], width=1, align="start"),
                             dbc.Col([
-                                html.Img(src="python_logo.png", alt="Python Logo", height="10px"),
-                            ], width=6, align='end')
-                        ])
+                                html.H1('pyRAO', style={'color': Aqua}),
+                                html.H5('Open-source diffraction app with Capytaine & Dash', style={'color': Aqua})
+                            ], width=4, align="start"),
+                        ], style={'height': '10vh'})
                     ])
                 ]),
             ], width=12),
@@ -62,18 +83,18 @@ app.layout = dbc.Container(
                 dbc.Card([
                     dbc.CardBody([
                         html.Div([
-                            html.H4("Run button"),
-                            html.Button('Run Diffraction', id='run_button')
+                            html.H4("Run button", style={'color': Navy}),
+                            html.Button('Run Diffraction', id='run_button', style=button_style)
                         ]),
-                    ])
+                    ], style={'height': '10vh'})
                 ]),
                 dbc.Row([
-                   html.H1(" ")
+                    html.H1(" ")
                 ]),
                 dbc.Card([
                     dbc.CardBody([
                         html.Div([
-                            html.H4("Inputs"),
+                            html.H4("Inputs", style={'color': Navy}),
                             dbc.Row([
                                 dbc.Col([
                                     html.H6('Vessel dimensions')
@@ -81,22 +102,22 @@ app.layout = dbc.Container(
                                 dbc.Col([
                                     dcc.Input(id='v_l', type='number', value=122, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='v_b', type='number', value=32, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='v_h', type='number', value=8, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='v_t', type='number', value=4.9, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2)
                             ]),
                             dbc.Row([
@@ -113,17 +134,17 @@ app.layout = dbc.Container(
                                 dbc.Col([
                                     dcc.Input(id='cogx', type='number', value=0, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='cogy', type='number', value=0, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='cogz', type='number', value=15, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2)
                             ]),
                             dbc.Row([
@@ -139,17 +160,17 @@ app.layout = dbc.Container(
                                 dbc.Col([
                                     dcc.Input(id='p_l', type='number', value=4, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='p_w', type='number', value=4, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='p_h', type='number', value=4, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2)
                             ]),
                             dbc.Row([
@@ -163,25 +184,25 @@ app.layout = dbc.Container(
                                     html.H6('Wave Periods')
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='t_min', type='number', value=4, persistence=True,
+                                    dcc.Input(id='t_min', type='number', value=1, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='t_max', type='number', value=30, persistence=True,
+                                    dcc.Input(id='t_max', type='number', value=20, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric')
+                                              inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='n_t', type='number', value=10, persistence=True,
+                                    dcc.Input(id='n_t', type='number', value=20, persistence=True,
                                               persistence_type='local',
-                                              inputMode='numeric', step=1)
+                                              inputMode='numeric', step=1, style=input_style)
                                 ], width=2)
                             ]),
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Max period [s]')], width=2),
                                 dbc.Col([html.P('Min period [s]')], width=2),
+                                dbc.Col([html.P('Max period [s]')], width=2),
                                 dbc.Col([html.P('No. of periods')], width=2)
                             ]),
                             dbc.Row([
@@ -190,17 +211,17 @@ app.layout = dbc.Container(
                                 ], width=3),
                                 dbc.Col([
                                     dcc.Input(id='d_min', type='number', value=0, persistence=True,
-                                              persistence_type='local',
+                                              persistence_type='local', style=input_style,
                                               inputMode='numeric', min=0, max=360, step=90)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='d_max', type='number', value=0, persistence=True,
-                                              persistence_type='local',
+                                              persistence_type='local', style=input_style,
                                               disabled=True, inputMode='numeric')
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='n_d', type='number', value=1, persistence=True,
-                                              persistence_type='local',
+                                              persistence_type='local', style=input_style,
                                               disabled=True, inputMode='numeric', step=1)
                                 ], width=2)
                             ]),
@@ -216,12 +237,13 @@ app.layout = dbc.Container(
                                 ], width=3),
                                 dbc.Col([
                                     dcc.Input(id='water_depth', type='number', value=347.8, persistence=True,
-                                              persistence_type='local', inputMode='numeric')
+                                              persistence_type='local', inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='rho_water', type='number', value=1025, persistence=True,
-                                              persistence_type='local', disabled=True, inputMode='numeric')
-                                ], width=2)
+                                              persistence_type='local', disabled=True, inputMode='numeric',
+                                              style=input_style)
+                                ], width=2),
                             ]),
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
@@ -229,49 +251,50 @@ app.layout = dbc.Container(
                                 dbc.Col([html.P('Density [kg/m^3]')], width=2)
                             ]),
                         ])
-                    ])
+                    ], style={'height': '60vh'})
                 ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.P([
+                                    html.A("Source code, ", href="https://github.com/arnavdoss/pyRAO",
+                                           style={'color': Navy}),
+                                    html.A("Plot.ly & ", href="https://plotly.com/", style={'color': Navy}),
+                                    html.A("Dash", href="https://plotly.com/dash/", style={'color': Navy})
+                                ]),
+                            ], style={'height': '8vh'})
+                        ])
+                    ], style={'width': 12, 'padding': 15})
+                ])
             ], width=5),
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        # dbc.Row([
-                        #     dcc.Graph(
-                        #         id='graph'
-                        #     ),
-                        #     dash_table.DataTable(
-                        #         id='table',
-                        #     )
-                        # ]),
                         dbc.Col([
                             html.Div([
                                 dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
                                     dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                                 dcc.Graph(
-                                                    id='graph'
+                                                    id='graph', style={'height': '70vh'}
                                                 )
                                             ]),
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                    dash_table.DataTable(
-                                                        id='table',
-                                                    )
+                                                dash_table.DataTable(
+                                                    id='table',
+                                                )
                                             ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
                             ])
                         ], width=12)
-                    ])
+                    ], style={'height': '81vh', 'overflow': 'auto'})
                 ])
             ], width=7)
         ]),
-        html.P([
-            html.A("Source code, ", href="https://github.com/arnavdoss/pyRAO"),
-            html.A("Plot.ly & ", href="https://plotly.com/"),
-            html.A("Dash", href="https://plotly.com/dash/")
-        ]),
-    ], fluid=True)
+    ], fluid=True, style={'height': '90vh', 'padding': '10px', 'width': '95vw'})
 
 
 @app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data')], [
@@ -366,4 +389,5 @@ def calculation(inputs, omegas, counter, RAO, body, omega, Values):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
+    # app.run_server(mode='inline', debug=True)

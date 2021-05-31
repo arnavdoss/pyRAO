@@ -17,8 +17,8 @@ from jupyter_dash import JupyterDash
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
-# app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
 
 Aqua = '#00ADEF'
 Navy = '#00306B'
@@ -283,7 +283,8 @@ app.layout = dbc.Container(
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                                 dash_table.DataTable(
-                                                    id='table',
+                                                    id='table', sort_action='native', style_cell={'textAlign': 'center'},
+                                                    export_format='csv'
                                                 )
                                             ]),
                                 ], style=tabs_styles),
@@ -297,13 +298,21 @@ app.layout = dbc.Container(
     ], fluid=True, style={'height': '90vh', 'padding': '10px', 'width': '95vw'})
 
 
-@app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data')], [
-    Input('run_button', 'n_clicks'),
-    Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'), Input('v_t', 'value'), Input('cogx', 'value'),
-    Input('cogy', 'value'), Input('cogz', 'value'), Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'),
-    Input('t_min', 'value'), Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'),
-    Input('d_max', 'value'), Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value')
-])
+@app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data'),
+               Output('table', 'style_data_conditional')],
+              [
+                  Input('run_button', 'n_clicks'),
+                  Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
+                  Input('v_t', 'value'),
+                  Input('cogx', 'value'),
+                  Input('cogy', 'value'), Input('cogz', 'value'), Input('p_l', 'value'),
+                  Input('p_w', 'value'),
+                  Input('p_h', 'value'),
+                  Input('t_min', 'value'), Input('t_max', 'value'), Input('n_t', 'value'),
+                  Input('d_min', 'value'),
+                  Input('d_max', 'value'), Input('n_d', 'value'), Input('water_depth', 'value'),
+                  Input('rho_water', 'value')
+              ])
 def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, d_max, n_d,
              water_depth, rho_water):
     ctx = dash.callback_context
@@ -334,6 +343,11 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
         RAOpd = initialize_calc(Values)
         columns = [{"name": i, "id": i} for i in RAOpd.columns]
         data = RAOpd.to_dict('records')
+        style_data_conditional = [
+            {
+                'if': {'row_index': 'odd'},
+                'backgroundColor': Gray}
+        ]
         figure = make_subplots(specs=[[{"secondary_y": True}]])
         figure.add_trace(go.Scatter(name='Surge', x=RAOpd["Period"].tolist(), y=RAOpd["Surge"].tolist()),
                          secondary_y=False, )
@@ -351,7 +365,7 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
         figure.update_xaxes(title_text='Period [s]')
         figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
         figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
-        return figure, columns, data
+        return figure, columns, data, style_data_conditional
 
 
 def initialize_calc(Values):

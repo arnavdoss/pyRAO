@@ -70,8 +70,6 @@ class EOM:
         CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz, self.show)
         RAO = self.solveeom(w_min, Mk, np.array(CM[w_min]), np.array(CA[w_min]), Ck, Fex[w_min])
-        RAO = RAO.tolist()
-        RAO = [item for sublist in RAO for item in sublist]
         return RAO
         # self.animate(omega.tolist()[0], body, RAO)
         # return RAO
@@ -118,6 +116,10 @@ class EOM:
         RAO = np.linalg.pinv(LHS).dot(RHS)
         # try lstsq?
         RAO = np.absolute(RAO)
+        RAO = RAO.tolist()
+        RAO = [item for sublist in RAO for item in sublist]
+        for a, b in enumerate(RAO):
+            RAO[a] = '{:.3e}'.format(b)
         return RAO
 
     def animate(self, omega, body, RAO):

@@ -1,4 +1,3 @@
-import meshmaker as mm
 import capytaine as cpt
 import numpy as np
 import xarray as xr

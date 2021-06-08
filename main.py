@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-from EOM import EOM
+from Solver.EOM import EOM
 from kivy.lang import Builder
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.app import MDApp
 from kmd_setup import mainapp
 from kivymd.uix.textfield import MDTextField
-from meshmaker import meshmaker
+from Solver.meshmaker import meshmaker
 import capytaine as cpt
 from kivy.properties import ObjectProperty
 import pandas as pd

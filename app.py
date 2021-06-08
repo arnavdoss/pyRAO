@@ -4,21 +4,21 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_table
-import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
 import capytaine as cpt
 import numpy as np
-from EOM import EOM
-from meshmaker import meshmaker
+from Solver.EOM import EOM
+from Solver.meshmaker import meshmaker
 import dash_bootstrap_components as dbc
-from jupyter_dash import JupyterDash
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# from jupyter_dash import JupyterDash
+
+# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
-app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+# app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
 
 Aqua = '#00ADEF'
 Navy = '#00306B'
@@ -276,17 +276,17 @@ app.layout = dbc.Container(
                                 dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
                                     dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                dcc.Graph(
-                                                    id='graph', style={'height': '70vh'}
-                                                )
-                                            ]),
+                                            dcc.Graph(
+                                                id='graph', style={'height': '70vh'}
+                                            )
+                                        ]),
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                dash_table.DataTable(
-                                                    id='table', sort_action='native', style_cell={'textAlign': 'center'},
-                                                    export_format='csv'
-                                                )
-                                            ]),
+                                            dash_table.DataTable(
+                                                id='table', sort_action='native', style_cell={'textAlign': 'center'},
+                                                export_format='csv'
+                                            )
+                                        ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
                             ])

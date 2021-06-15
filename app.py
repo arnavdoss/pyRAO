@@ -283,9 +283,40 @@ app.layout = dbc.Container(
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             dash_table.DataTable(
-                                                id='table', sort_action='native', style_cell={'textAlign': 'center'},
-                                                export_format='csv'
+                                                id='table', sort_action='native', style_cell={'textAlign': 'center'}
+                                                , export_format='csv'
                                             )
+                                        ]),
+                                    dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
+                                            selected_style=tab_selected_style, children=[
+                                                dbc.Row([
+                                                    dbc.Col([
+                                                        html.H6('Wave properties')
+                                                    ], width=3),
+                                                    dbc.Col([
+                                                        dcc.Input(id='Hs', type='number', value=2,
+                                                                  persistence=True,
+                                                                  persistence_type='local', inputMode='numeric',
+                                                                  style=input_style)
+                                                    ], width=2),
+                                                    dbc.Col([
+                                                        dcc.Input(id='gamma', type='number', value=10,
+                                                                  persistence=True,
+                                                                  persistence_type='local', disabled=True,
+                                                                  inputMode='numeric',
+                                                                  style=input_style)
+                                                    ], width=2),
+                                                    dbc.Col([
+                                                        dcc.Input(id='alpha', type='number', value=10,
+                                                                  persistence=True,
+                                                                  persistence_type='local', disabled=True,
+                                                                  inputMode='numeric',
+                                                                  style=input_style)
+                                                    ], width=2),
+                                                ]),
+                                                dbc.Row([
+                                                    dcc.Graph(id='response_graph')
+                                                ])
                                         ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
@@ -400,6 +431,9 @@ def calculation(inputs, omegas, counter, RAO, body, omega, Values):
     RAO.append(EOM(body, inputs, show=False).solve())
     progress = (int(counter + 1) / int(Values["n_t"])) * 100
     return omegas, RAO
+
+
+# @app.callback([Output])
 
 
 if __name__ == '__main__':

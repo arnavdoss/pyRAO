@@ -11,6 +11,7 @@ import capytaine as cpt
 import numpy as np
 from Solver.EOM import EOM
 from Solver.meshmaker import meshmaker
+from Solver.JONSWAP import response
 import dash_bootstrap_components as dbc
 
 # from jupyter_dash import JupyterDash
@@ -150,8 +151,8 @@ app.layout = dbc.Container(
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
                                 dbc.Col([html.P('LCG [m]')], width=2),
-                                dbc.Col([html.P('VCG [m]')], width=2),
-                                dbc.Col([html.P('TCG [m]')], width=2)
+                                dbc.Col([html.P('TCG [m]')], width=2),
+                                dbc.Col([html.P('VCG [m]')], width=2)
                             ]),
                             dbc.Row([
                                 dbc.Col([
@@ -248,7 +249,36 @@ app.layout = dbc.Container(
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
                                 dbc.Col([html.P('Depth [m]')], width=2),
-                                dbc.Col([html.P('Density [kg/m^3]')], width=2)
+                                dbc.Col([html.P('Density [kg/m^3]')], width=4)
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    html.H6('Wave properties')
+                                ], width=3),
+                                dbc.Col([
+                                    dcc.Input(id='Hs', type='number', value=2,
+                                              persistence=True,
+                                              persistence_type='local', inputMode='numeric',
+                                              style=input_style)
+                                ], width=2),
+                                dbc.Col([
+                                    dcc.Input(id='Tp', type='number', value=5.1,
+                                              persistence=True,
+                                              persistence_type='local', inputMode='numeric',
+                                              style=input_style)
+                                ], width=2),
+                                dbc.Col([
+                                    dcc.Input(id='gamma', type='number', value=3.3,
+                                              persistence=True,
+                                              persistence_type='local', inputMode='numeric',
+                                              style=input_style)
+                                ], width=2),
+                            ]),
+                            dbc.Row([
+                                dbc.Col([html.P(' ')], width=3),
+                                dbc.Col([html.P('Hs [m]')], width=2),
+                                dbc.Col([html.P('Tp [s]')], width=2),
+                                dbc.Col([html.P('Gamma [-]')], width=2)
                             ]),
                         ])
                     ], style={'height': '60vh'})
@@ -276,48 +306,25 @@ app.layout = dbc.Container(
                                 dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
                                     dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                            dcc.Graph(
-                                                id='graph', style={'height': '70vh'}
-                                            )
-                                        ]),
+                                                dcc.Graph(
+                                                    id='graph', style={'height': '70vh'}
+                                                )
+                                            ]),
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                            dash_table.DataTable(
-                                                id='table', sort_action='native', style_cell={'textAlign': 'center'}
-                                                , export_format='csv'
-                                            )
-                                        ]),
+                                                dash_table.DataTable(
+                                                    id='table', sort_action='native', style_cell={'textAlign': 'center'}
+                                                    , export_format='csv'
+                                                )
+                                            ]),
                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                                 dbc.Row([
-                                                    dbc.Col([
-                                                        html.H6('Wave properties')
-                                                    ], width=3),
-                                                    dbc.Col([
-                                                        dcc.Input(id='Hs', type='number', value=2,
-                                                                  persistence=True,
-                                                                  persistence_type='local', inputMode='numeric',
-                                                                  style=input_style)
-                                                    ], width=2),
-                                                    dbc.Col([
-                                                        dcc.Input(id='gamma', type='number', value=10,
-                                                                  persistence=True,
-                                                                  persistence_type='local', disabled=True,
-                                                                  inputMode='numeric',
-                                                                  style=input_style)
-                                                    ], width=2),
-                                                    dbc.Col([
-                                                        dcc.Input(id='alpha', type='number', value=10,
-                                                                  persistence=True,
-                                                                  persistence_type='local', disabled=True,
-                                                                  inputMode='numeric',
-                                                                  style=input_style)
-                                                    ], width=2),
-                                                ]),
-                                                dbc.Row([
-                                                    dcc.Graph(id='response_graph')
+                                                    dcc.Graph(
+                                                        id='response_graph', style={'height': '70vh'}
+                                                    )
                                                 ])
-                                        ]),
+                                            ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
                             ])
@@ -330,47 +337,44 @@ app.layout = dbc.Container(
 
 
 @app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data'),
-               Output('table', 'style_data_conditional')],
+               Output('table', 'style_data_conditional'), Output('response_graph', 'figure')],
               [
                   Input('run_button', 'n_clicks'),
                   Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-                  Input('v_t', 'value'),
-                  Input('cogx', 'value'),
-                  Input('cogy', 'value'), Input('cogz', 'value'), Input('p_l', 'value'),
-                  Input('p_w', 'value'),
-                  Input('p_h', 'value'),
-                  Input('t_min', 'value'), Input('t_max', 'value'), Input('n_t', 'value'),
-                  Input('d_min', 'value'),
-                  Input('d_max', 'value'), Input('n_d', 'value'), Input('water_depth', 'value'),
-                  Input('rho_water', 'value')
+                  Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+                  Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
+                  Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('d_max', 'value'),
+                  Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value'),
+                  Input('Hs', 'value'), Input('Tp', 'value'), Input('gamma', 'value')
               ])
 def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, d_max, n_d,
-             water_depth, rho_water):
+             water_depth, rho_water, Hs, Tp, gamma):
     ctx = dash.callback_context
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
 
+    Values = {
+        'v_l': v_l,
+        'v_b': v_b,
+        'v_h': v_h,
+        'v_t': v_t,
+        'cogx': cogx,
+        'cogy': cogy,
+        'cogz': cogz,
+        'p_l': p_l,
+        'p_w': p_w,
+        'p_h': p_h,
+        't_min': t_min,
+        't_max': t_max,
+        'n_t': n_t,
+        'd_min': d_min,
+        'd_max': d_max,
+        'n_d': n_d,
+        'water_depth': water_depth,
+        'rho_water': rho_water,
+    }
+    RAOpd = pd.DataFrame()
     if trigger_name == 'run_button':
-        Values = {
-            'v_l': v_l,
-            'v_b': v_b,
-            'v_h': v_h,
-            'v_t': v_t,
-            'cogx': cogx,
-            'cogy': cogy,
-            'cogz': cogz,
-            'p_l': p_l,
-            'p_w': p_w,
-            'p_h': p_h,
-            't_min': t_min,
-            't_max': t_max,
-            'n_t': n_t,
-            'd_min': d_min,
-            'd_max': d_max,
-            'n_d': n_d,
-            'water_depth': water_depth,
-            'rho_water': rho_water,
-        }
         RAOpd = initialize_calc(Values)
         columns = [{"name": i, "id": i} for i in RAOpd.columns]
         data = RAOpd.to_dict('records')
@@ -379,25 +383,33 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
                 'if': {'row_index': 'odd'},
                 'backgroundColor': Gray}
         ]
-        figure = make_subplots(specs=[[{"secondary_y": True}]])
-        figure.add_trace(go.Scatter(name='Surge', x=RAOpd["Period"].tolist(), y=RAOpd["Surge"].tolist()),
-                         secondary_y=False, )
-        figure.add_trace(go.Scatter(name='Sway', x=RAOpd["Period"].tolist(), y=RAOpd["Sway"].tolist()),
-                         secondary_y=False, )
-        figure.add_trace(go.Scatter(name='Heave', x=RAOpd["Period"].tolist(), y=RAOpd["Heave"].tolist()),
-                         secondary_y=False, )
-        figure.add_trace(go.Scatter(name='Roll', x=RAOpd["Period"].tolist(), y=RAOpd["Roll"].tolist()),
-                         secondary_y=True, )
-        figure.add_trace(go.Scatter(name='Pitch', x=RAOpd["Period"].tolist(), y=RAOpd["Pitch"].tolist()),
-                         secondary_y=True, )
-        figure.add_trace(go.Scatter(name='Yaw', x=RAOpd["Period"].tolist(), y=RAOpd["Yaw"].tolist()),
-                         secondary_y=True, )
-        figure.update_layout(title_text='Barge RAO', yaxis=dict(showexponent='all', exponentformat='e'))
-        figure.update_xaxes(title_text='Period [s]')
-        figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
-        figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
-        return figure, columns, data, style_data_conditional
+        graph = create_figure(RAOpd)
+        return [graph, columns, data, style_data_conditional, graph]
 
+    if trigger_name == 'Hs' or 'gamma' or 'alpha' or 'beta':
+        # response(Values, RAOpd, Hs, Tp, gamma)
+        pass
+
+
+def create_figure(RAOpd):
+    figure = make_subplots(specs=[[{"secondary_y": True}]])
+    figure.add_trace(go.Scatter(name='Surge', x=RAOpd["Period"].tolist(), y=RAOpd["Surge"].tolist()),
+                     secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Sway', x=RAOpd["Period"].tolist(), y=RAOpd["Sway"].tolist()),
+                     secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Heave', x=RAOpd["Period"].tolist(), y=RAOpd["Heave"].tolist()),
+                     secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Roll', x=RAOpd["Period"].tolist(), y=RAOpd["Roll"].tolist()),
+                     secondary_y=True, )
+    figure.add_trace(go.Scatter(name='Pitch', x=RAOpd["Period"].tolist(), y=RAOpd["Pitch"].tolist()),
+                     secondary_y=True, )
+    figure.add_trace(go.Scatter(name='Yaw', x=RAOpd["Period"].tolist(), y=RAOpd["Yaw"].tolist()),
+                     secondary_y=True, )
+    figure.update_layout(title_text='Barge RAO', yaxis=dict(showexponent='all', exponentformat='e'))
+    figure.update_xaxes(title_text='Period [s]')
+    figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
+    figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
+    return figure
 
 def initialize_calc(Values):
     body = makemesh(Values)

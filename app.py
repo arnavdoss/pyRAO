@@ -306,25 +306,25 @@ app.layout = dbc.Container(
                                 dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
                                     dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                dcc.Graph(
-                                                    id='graph', style={'height': '70vh'}
-                                                )
-                                            ]),
+                                            dcc.Graph(
+                                                id='graph', style={'height': '70vh'}
+                                            )
+                                        ]),
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                dash_table.DataTable(
-                                                    id='table', sort_action='native', style_cell={'textAlign': 'center'}
-                                                    , export_format='csv'
-                                                )
-                                            ]),
+                                            dash_table.DataTable(
+                                                id='table', sort_action='native', style_cell={'textAlign': 'center'}
+                                                , export_format='csv'
+                                            )
+                                        ]),
                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
-                                                dbc.Row([
-                                                    dcc.Graph(
-                                                        id='response_graph', style={'height': '70vh'}
-                                                    )
-                                                ])
-                                            ]),
+                                            dbc.Row([
+                                                dcc.Graph(
+                                                    id='response_graph', style={'height': '70vh'}
+                                                )
+                                            ])
+                                        ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
                             ])
@@ -333,22 +333,23 @@ app.layout = dbc.Container(
                 ])
             ], width=7)
         ]),
+        dcc.Store(id='RAO_data')
     ], fluid=True, style={'height': '90vh', 'padding': '10px', 'width': '95vw'})
 
 
 @app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data'),
-               Output('table', 'style_data_conditional'), Output('response_graph', 'figure')],
-              [
+               Output('table', 'style_data_conditional'),
+               Output('RAO_data', 'data')
+               ], [
                   Input('run_button', 'n_clicks'),
                   Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
                   Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
                   Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
                   Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('d_max', 'value'),
-                  Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value'),
-                  Input('Hs', 'value'), Input('Tp', 'value'), Input('gamma', 'value')
+                  Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value')
               ])
 def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, d_max, n_d,
-             water_depth, rho_water, Hs, Tp, gamma):
+             water_depth, rho_water):
     ctx = dash.callback_context
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -384,11 +385,43 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
                 'backgroundColor': Gray}
         ]
         graph = create_figure(RAOpd)
-        return [graph, columns, data, style_data_conditional, graph]
+        RAO_json = RAOpd.to_json()
+        return [graph, columns, data, style_data_conditional, RAO_json]
 
-    if trigger_name == 'Hs' or 'gamma' or 'alpha' or 'beta':
-        # response(Values, RAOpd, Hs, Tp, gamma)
-        pass
+
+@app.callback(Output('response_graph', 'figure'),
+              [Input('RAO_data', 'data'), Input('Hs', 'value'), Input('Tp', 'value'),
+               Input('gamma', 'value'), Input('t_min', 'value'), Input('t_max', 'value'), Input('n_t', 'value')])
+def updateresponsegraph(RAO_data, Hs, Tp, gamma, t_min, t_max, n_t):
+    ctx = dash.callback_context
+    if ctx.triggered:
+        trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if trigger_name == 'RAO_data' or 'Hs' or 'Tp' or 'gamma':
+        RAOpd = pd.read_json(RAO_data)
+        # figure = create_figure(RAOpd)
+        Values = {'t_min': t_min, 't_max': t_max, 'n_t': n_t}
+        omega = np.linspace(2 * np.pi / Values['t_max'], 2 * np.pi / Values['t_min'], Values['n_t'])
+        Sz, RAO_response = response(Values, RAOpd, Hs, Tp, gamma)
+        figure = make_subplots(specs=[[{"secondary_y": True}]])
+        figure.add_trace(go.Scatter(name='JONSWAP', x=omega, y=Sz), secondary_y=False, )
+        figure.add_trace(go.Scatter(name='Surge', x=omega, y=RAO_response["Surge"].tolist()),
+                         secondary_y=False, )
+        figure.add_trace(go.Scatter(name='Sway', x=omega, y=RAO_response["Sway"].tolist()),
+                         secondary_y=False, )
+        figure.add_trace(go.Scatter(name='Heave', x=omega, y=RAO_response["Heave"].tolist()),
+                         secondary_y=False, )
+        figure.add_trace(go.Scatter(name='Roll', x=omega, y=RAO_response["Roll"].tolist()),
+                         secondary_y=True, )
+        figure.add_trace(go.Scatter(name='Pitch', x=omega, y=RAO_response["Pitch"].tolist()),
+                         secondary_y=True, )
+        figure.add_trace(go.Scatter(name='Yaw', x=omega, y=RAO_response["Yaw"].tolist()),
+                         secondary_y=True, )
+        figure.update_layout(title_text='Barge Response', yaxis=dict(showexponent='all', exponentformat='e'))
+        figure.update_xaxes(title_text='Omega [rad/s]')
+        figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
+        figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
+        return figure
 
 
 def create_figure(RAOpd):
@@ -410,6 +443,7 @@ def create_figure(RAOpd):
     figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
     figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
     return figure
+
 
 def initialize_calc(Values):
     body = makemesh(Values)
@@ -449,5 +483,5 @@ def calculation(inputs, omegas, counter, RAO, body, omega, Values):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
     # app.run_server(mode='inline', debug=True)

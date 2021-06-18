@@ -69,7 +69,8 @@ class EOM:
         CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz, self.show)
         RAO = self.solveeom(w_min, Mk, np.array(CM[w_min]), np.array(CA[w_min]), Ck, Fex[w_min])
-        return RAO
+        FRAO = np.abs(Fex[w_min].tolist()[0])
+        return RAO, FRAO
         # self.animate(omega.tolist()[0], body, RAO)
         # return RAO
 
@@ -85,7 +86,6 @@ class EOM:
         body.add_rotation_dof(axis=axisx, name="Roll", amplitude=1.0)
         body.add_rotation_dof(axis=axisy, name="Pitch", amplitude=1.0)
         body.add_rotation_dof(axis=axisz, name="Yaw", amplitude=1.0)
-
         if show:
             body.show()
         problems = xr.Dataset(coords={

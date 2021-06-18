@@ -308,6 +308,9 @@ app.layout = dbc.Container(
                                             selected_style=tab_selected_style, children=[
                                             dcc.Graph(
                                                 id='graph', style={'height': '70vh'}
+                                            ),
+                                            dcc.Graph(
+                                                id='graph_FRAO', style={'height': '70vh'}
                                             )
                                         ]),
                                     dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
@@ -339,7 +342,7 @@ app.layout = dbc.Container(
 
 @app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data'),
                Output('table', 'style_data_conditional'),
-               Output('RAO_data', 'data')
+               Output('RAO_data', 'data'), Output('graph_FRAO', 'figure')
                ], [
                   Input('run_button', 'n_clicks'),
                   Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
@@ -376,7 +379,7 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
     }
     RAOpd = pd.DataFrame()
     if trigger_name == 'run_button':
-        RAOpd = initialize_calc(Values)
+        RAOpd, FRAO = initialize_calc(Values)
         columns = [{"name": i, "id": i} for i in RAOpd.columns]
         data = RAOpd.to_dict('records')
         style_data_conditional = [
@@ -386,7 +389,12 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
         ]
         graph = create_figure(RAOpd)
         RAO_json = RAOpd.to_json()
-        return [graph, columns, data, style_data_conditional, RAO_json]
+        graph_FRAO = create_figure(FRAO)
+        graph_FRAO.update_layout(title_text='Barge Force RAO', yaxis=dict(showexponent='all', exponentformat='e'))
+        graph_FRAO.update_xaxes(title_text='Period [s]')
+        graph_FRAO.update_yaxes(title_text='Translational Force RAOs [kN/m]', secondary_y=False)
+        graph_FRAO.update_yaxes(title_text='Rotational Force RAOs [kN.rad/m]', secondary_y=True)
+        return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
 
 
 @app.callback(Output('response_graph', 'figure'),
@@ -452,14 +460,17 @@ def initialize_calc(Values):
     counter = 0
     omegas = []
     RAO = []
+    FRAO = []
     inputs = Values.copy()
     inputs["n_t"] = 1
     while counter < int(Values["n_t"]):
-        omegas, RAO = calculation(inputs, omegas, counter, RAO, body, omega, Values)
+        omegas, RAO, FRAO = calculation(inputs, omegas, counter, RAO, body, omega, Values, FRAO)
+        FRAOpd = pd.DataFrame(FRAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
+        FRAOpd.insert(0, "Period", omegas, True)
         RAOpd = pd.DataFrame(RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
         RAOpd.insert(0, "Period", omegas, True)
         counter += 1
-    return RAOpd
+    return RAOpd, FRAOpd
 
 
 def makemesh(Values):
@@ -471,17 +482,19 @@ def makemesh(Values):
     return body
 
 
-def calculation(inputs, omegas, counter, RAO, body, omega, Values):
+def calculation(inputs, omegas, counter, RAO, body, omega, Values, FRAO):
     inputs["t_min"] = omega[counter]
     omegas.append(np.round(omega[counter], 2))
-    RAO.append(EOM(body, inputs, show=False).solve())
+    RAO_val, FRAO_val = EOM(body, inputs, show=False).solve()
+    RAO.append(RAO_val)
+    FRAO.append(FRAO_val)
     progress = (int(counter + 1) / int(Values["n_t"])) * 100
-    return omegas, RAO
+    return omegas, RAO, FRAO
 
 
 # @app.callback([Output])
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
     # app.run_server(mode='inline', debug=True)

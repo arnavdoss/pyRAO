@@ -1,5 +1,5 @@
 import numpy as np
-class meshmaker:
+class meshviewer:
 
     def __init__(self, length, beam, draft, xres, yres, zres):
         self.length = length

@@ -1,14 +1,5 @@
 import numpy as np
 
-from enum import Enum
-
-class FaceSide(Enum):
-    bottom = 'bottom'
-    SB = 'SB'
-    PS = 'PS'
-    fwd = 'fwd'
-    aft = 'aft'
-
 class meshmaker:
 
     def __init__(self, length, beam, draft, xres, yres, zres):

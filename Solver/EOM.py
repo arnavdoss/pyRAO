@@ -117,8 +117,8 @@ class EOM:
         RAO = np.absolute(RAO)
         RAO = RAO.tolist()
         RAO = [item for sublist in RAO for item in sublist]
-        for a, b in enumerate(RAO):
-            RAO[a] = '{:.3e}'.format(b)
+        # for a, b in enumerate(RAO):
+        #     RAO[a] = '{:.3e}'.format(b)
         return RAO
 
     def animate(self, omega, body, RAO):

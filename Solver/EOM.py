@@ -1,6 +1,7 @@
 import capytaine as cpt
 import numpy as np
 import xarray as xr
+import pandas as pd
 
 
 class EOM:
@@ -47,8 +48,8 @@ class EOM:
         Mk[5, 5] = (1 / 12) * (v_l ** 2 + v_b ** 2) * mass
         Mk[4, 5] = -(1 / 12) * (v_l * v_h) * mass
         Mk[5, 3] = Mk[4, 5]
-        # Mk[5, 4] = -(1 / 12) * (v_b * v_h) * mass
-        # Mk[4, 3] = Mk[5, 4]
+        Mk[5, 4] = -(1 / 12) * (v_b * v_h) * mass
+        Mk[4, 3] = Mk[5, 4]
 
 
 
@@ -109,7 +110,6 @@ class EOM:
         return CM, CA, Fex
 
     def solveeom(self, omega, Mk, CM, CA, Ck, Fex):
-        # print(Fex)
         LHS = (-np.power(omega, 2) * (Mk + CM)) - (1j * omega * CA) + Ck
         RHS = Fex.transpose()
         RAO = np.linalg.pinv(LHS).dot(RHS)
@@ -117,8 +117,6 @@ class EOM:
         RAO = np.absolute(RAO)
         RAO = RAO.tolist()
         RAO = [item for sublist in RAO for item in sublist]
-        # for a, b in enumerate(RAO):
-        #     RAO[a] = '{:.3e}'.format(b)
         return RAO
 
     def animate(self, omega, body, RAO):

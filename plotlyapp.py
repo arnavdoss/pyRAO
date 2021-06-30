@@ -392,8 +392,8 @@ def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_mi
         graph_FRAO = create_figure(FRAO)
         graph_FRAO.update_layout(title_text='Barge Force RAO', yaxis=dict(showexponent='all', exponentformat='e'))
         graph_FRAO.update_xaxes(title_text='Period [s]')
-        graph_FRAO.update_yaxes(title_text='Translational Force RAOs [kN/m]', secondary_y=False)
-        graph_FRAO.update_yaxes(title_text='Rotational Force RAOs [kN.rad/m]', secondary_y=True)
+        graph_FRAO.update_yaxes(title_text='Translational Force RAOs [N/m]', secondary_y=False)
+        graph_FRAO.update_yaxes(title_text='Rotational Force RAOs [N.rad/m]', secondary_y=True)
         return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
 
 

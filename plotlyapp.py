@@ -84,10 +84,15 @@ app.layout = dbc.Container(
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Div([
-                            html.H4("Run button", style={'color': Navy}),
-                            html.Button('Run Diffraction', id='run_button', style=button_style)
+                        dbc.Col([
+                            html.Div([
+                                html.H4("Run button", style={'color': Navy}),
+                                html.Button('Run Diffraction', id='run_button', style=button_style)
+                            ]),
                         ]),
+                        # dbc.Col([
+                        #     html.Img(id='loading_gif', alt='Calculating...', width='20%')
+                        # ]),
                     ], style={'height': '10vh'})
                 ]),
                 dbc.Row([
@@ -423,97 +428,6 @@ def run_diff(Values_json, RAOpd_json):
     else:
         raise PreventUpdate
 
-# @app.callback([Output('graph', 'figure'), Output('table', 'columns'), Output('table', 'data'),
-#                Output('table', 'style_data_conditional'),
-#                Output('RAO_data', 'data'), Output('graph_FRAO', 'figure')
-#                ], [
-#                   Input('run_button', 'n_clicks'),
-#                   Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-#                   Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
-#                   Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
-#                   Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('d_max', 'value'),
-#                   Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value')
-#               ])
-# def run_diff(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, d_max, n_d,
-#              water_depth, rho_water):
-#     ctx = dash.callback_context
-#     if ctx.triggered:
-#         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
-#
-#     Values = {
-#         'v_l': v_l,
-#         'v_b': v_b,
-#         'v_h': v_h,
-#         'v_t': v_t,
-#         'cogx': cogx,
-#         'cogy': cogy,
-#         'cogz': cogz,
-#         'p_l': p_l,
-#         'p_w': p_w,
-#         'p_h': p_h,
-#         't_min': t_min,
-#         't_max': t_max,
-#         'n_t': n_t,
-#         'd_min': d_min,
-#         'd_max': d_max,
-#         'n_d': n_d,
-#         'water_depth': water_depth,
-#         'rho_water': rho_water,
-#     }
-#     RAOpd = pd.DataFrame()
-#     if trigger_name == 'run_button':
-#         RAOpd, FRAO = initialize_calc(Values)
-#         columns = [{"name": i, "id": i} for i in RAOpd.columns]
-#         data = RAOpd.to_dict('records')
-#         style_data_conditional = [
-#             {
-#                 'if': {'row_index': 'odd'},
-#                 'backgroundColor': Gray}
-#         ]
-#         graph = create_figure(RAOpd)
-#         RAO_json = RAOpd.to_json()
-#         graph_FRAO = create_figure(FRAO)
-#         graph_FRAO.update_layout(title_text='Barge Force RAO', yaxis=dict(showexponent='all', exponentformat='e'))
-#         graph_FRAO.update_xaxes(title_text='Period [s]')
-#         graph_FRAO.update_yaxes(title_text='Translational Force RAOs [N/m]', secondary_y=False)
-#         graph_FRAO.update_yaxes(title_text='Rotational Force RAOs [N.rad/m]', secondary_y=True)
-#         return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
-
-
-# @app.callback(Output('response_graph', 'figure'),
-#               [Input('RAO_data', 'data'), Input('Hs', 'value'), Input('Tp', 'value'),
-#                Input('gamma', 'value'), Input('t_min', 'value'), Input('t_max', 'value'), Input('n_t', 'value')])
-# def updateresponsegraph(RAO_data, Hs, Tp, gamma, t_min, t_max, n_t):
-#     ctx = dash.callback_context
-#     if ctx.triggered:
-#         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
-#
-#     if trigger_name == 'RAO_data' or 'Hs' or 'Tp' or 'gamma':
-#         RAOpd = pd.read_json(RAO_data)
-#         # figure = create_figure(RAOpd)
-#         Values = {'t_min': t_min, 't_max': t_max, 'n_t': n_t}
-#         omega = np.linspace(2 * np.pi / Values['t_max'], 2 * np.pi / Values['t_min'], Values['n_t'])
-#         Sz, RAO_response = response(Values, RAOpd, Hs, Tp, gamma)
-#         figure = make_subplots(specs=[[{"secondary_y": True}]])
-#         figure.add_trace(go.Scatter(name='JONSWAP', x=omega, y=Sz), secondary_y=False, )
-#         figure.add_trace(go.Scatter(name='Surge', x=omega, y=RAO_response["Surge"].tolist()),
-#                          secondary_y=False, )
-#         figure.add_trace(go.Scatter(name='Sway', x=omega, y=RAO_response["Sway"].tolist()),
-#                          secondary_y=False, )
-#         figure.add_trace(go.Scatter(name='Heave', x=omega, y=RAO_response["Heave"].tolist()),
-#                          secondary_y=False, )
-#         figure.add_trace(go.Scatter(name='Roll', x=omega, y=RAO_response["Roll"].tolist()),
-#                          secondary_y=True, )
-#         figure.add_trace(go.Scatter(name='Pitch', x=omega, y=RAO_response["Pitch"].tolist()),
-#                          secondary_y=True, )
-#         figure.add_trace(go.Scatter(name='Yaw', x=omega, y=RAO_response["Yaw"].tolist()),
-#                          secondary_y=True, )
-#         figure.update_layout(title_text='Barge Response', yaxis=dict(showexponent='all', exponentformat='e'))
-#         figure.update_xaxes(title_text='Omega [rad/s]')
-#         figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
-#         figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
-#         return figure
-
 
 def create_figure(RAOpd):
     figure = make_subplots(specs=[[{"secondary_y": True}]])
@@ -536,26 +450,6 @@ def create_figure(RAOpd):
     return figure
 
 
-def initialize_calc(Values):
-    body = makemesh(Values)
-    omega = np.linspace(float(Values["t_min"]), float(Values["t_max"]),
-                        int(Values["n_t"]))
-    counter = 0
-    omegas = []
-    RAO = []
-    FRAO = []
-    inputs = Values.copy()
-    inputs["n_t"] = 1
-    while counter < int(Values["n_t"]):
-        omegas, RAO, FRAO = calculation(inputs, omegas, counter, RAO, body, omega, Values, FRAO)
-        FRAOpd = pd.DataFrame(FRAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
-        FRAOpd.insert(0, "Period", omegas, True)
-        RAOpd = pd.DataFrame(RAO, columns=["Surge", "Sway", "Heave", "Roll", "Pitch", "Yaw"])
-        RAOpd.insert(0, "Period", omegas, True)
-        counter += 1
-    return RAOpd, FRAOpd
-
-
 def makemesh(a):
     mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
     faces, vertices = mesh.barge()
@@ -564,19 +458,5 @@ def makemesh(a):
     return body
 
 
-def calculation(inputs, omegas, counter, RAO, body, omega, Values, FRAO):
-    inputs["t_min"] = omega[counter]
-    omegas.append(np.round(omega[counter], 2))
-    RAO_val, FRAO_val = EOM(body, inputs, show=False).solve()
-    RAO.append(RAO_val)
-    FRAO.append(FRAO_val)
-    progress = (int(counter + 1) / int(Values["n_t"])) * 100
-    return omegas, RAO, FRAO
-
-
-# @app.callback([Output])
-
-
 if __name__ == '__main__':
     app.run_server(debug=True)
-    # app.run_server(mode='inline', debug=True)

@@ -14,7 +14,7 @@ from Solver.meshmaker import meshmaker
 from Solver.JONSWAP import response
 import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-bootstrap-components
 from dash.exceptions import PreventUpdate
-from Solver.hydrostatics import meshK
+from Solver.hydrostatics_wrapper import meshK
 
 # from jupyter_dash import JupyterDash
 

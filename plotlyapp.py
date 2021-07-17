@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import dash
+import dash  # pip install dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -7,13 +7,14 @@ import dash_table
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
-import capytaine as cpt
+import capytaine as cpt  # conda install -c conda-forge capytaine
 import numpy as np
 from Solver.EOM import EOM
 from Solver.meshmaker import meshmaker
 from Solver.JONSWAP import response
-import dash_bootstrap_components as dbc
+import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-bootstrap-components
 from dash.exceptions import PreventUpdate
+from Solver.hydrostatics import meshK
 
 # from jupyter_dash import JupyterDash
 
@@ -47,7 +48,7 @@ tab_selected_style = {
 
 button_style = {
     'backgroundColor': 'white',
-    'border': '1px solid #EBE9E9'
+    'border': '0px solid #EBE9E9',
 }
 
 input_style = {
@@ -66,34 +67,35 @@ app.layout = dbc.Container(
                             dbc.Col([
                                 html.Img(
                                     src=app.get_asset_url('python-logo.svg'),
-                                    alt="Python Logo", width="75%"),
-                            ], width=1, align="start"),
+                                    alt="Python Logo", width="70dp"),
+                            ], width=2, align="start"),
                             dbc.Col([
-                                html.H1('pyRAO', style={'color': Aqua}),
-                                html.H5('Open-source diffraction app with Capytaine & Dash', style={'color': Aqua})
-                            ], width=4, align="start"),
-                        ], style={'height': '10vh'})
+                                html.H3('pyRAO', style={'color': Aqua}),
+                                html.H6('Open-source diffraction app with Capytaine & Dash', style={'color': Aqua})
+                            ], width=10, align="start"),
+                        ])
                     ])
                 ]),
-            ], width=12),
-        ], align='end'),
-        dbc.Row([
-            html.H1(' ')
-        ]),
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        dbc.Col([
-                            html.Div([
-                                html.H4("Run button", style={'color': Navy}),
-                                html.Button('Run Diffraction', id='run_button', style=button_style)
-                            ]),
-                        ]),
-                        # dbc.Col([
-                        #     html.Img(id='loading_gif', alt='Calculating...', width='20%')
-                        # ]),
-                    ], style={'height': '10vh'})
+                dbc.Row([
+                    html.H1(" ")
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.Button(id='run_button', style=button_style, children=[
+                                html.Img(height='50px ', title='Begin diffraction analysis',
+                                         src=app.get_asset_url('start_icon.svg'))])
+                        ], style={'align-items': 'center'}),
+                    ], width=2),
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.Div([
+                                    dbc.Progress(id='progress_bar', style={"height": "10px"}),
+                                ]),
+                            ])
+                        ])
+                    ], width=10)
                 ]),
                 dbc.Row([
                     html.H1(" ")
@@ -101,7 +103,7 @@ app.layout = dbc.Container(
                 dbc.Card([
                     dbc.CardBody([
                         html.Div([
-                            html.H4("Inputs", style={'color': Navy}),
+                            # html.H4("Inputs", style={'color': Navy}),
                             dbc.Row([
                                 dbc.Col([
                                     html.H6('Vessel dimensions')
@@ -128,11 +130,11 @@ app.layout = dbc.Container(
                                 ], width=2)
                             ]),
                             dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Length [m]')], width=2),
-                                dbc.Col([html.P('Breadth [m]')], width=2),
-                                dbc.Col([html.P('Height [m]')], width=2),
-                                dbc.Col([html.P('Draft [m]')], width=2),
+                                dbc.Col([html.A(' ')], width=3),
+                                dbc.Col([html.A('Length [m]')], width=2),
+                                dbc.Col([html.A('Breadth [m]')], width=2),
+                                dbc.Col([html.A('Height [m]')], width=2),
+                                dbc.Col([html.A('Draft [m]')], width=2),
                             ]),
                             dbc.Row([
                                 dbc.Col([
@@ -156,13 +158,13 @@ app.layout = dbc.Container(
                             ]),
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('LCG [m]')], width=2),
-                                dbc.Col([html.P('TCG [m]')], width=2),
-                                dbc.Col([html.P('VCG [m]')], width=2)
+                                dbc.Col([html.P('LCG [m]    Midship 0')], width=2),
+                                dbc.Col([html.P('TCG [m]    Centerline 0')], width=2),
+                                dbc.Col([html.P('VCG [m]    Ship-Keel 0')], width=2)
                             ]),
                             dbc.Row([
                                 dbc.Col([
-                                    html.H6('Panel dimensions')
+                                    html.H6('Mesh panel dimensions')
                                 ], width=3),
                                 dbc.Col([
                                     dcc.Input(id='p_l', type='number', value=4, persistence=True,
@@ -188,8 +190,13 @@ app.layout = dbc.Container(
                             ]),
                             dbc.Row([
                                 dbc.Col([
-                                    html.H6('Wave Periods')
+                                    html.H6('Waves')
                                 ], width=3),
+                                dbc.Col([
+                                    dcc.Input(id='d_min', type='number', value=0, persistence=True,
+                                              persistence_type='local', style=input_style,
+                                              inputMode='numeric', min=0, max=360, step=15)
+                                ], width=2),
                                 dbc.Col([
                                     dcc.Input(id='t_min', type='number', value=1, persistence=True,
                                               persistence_type='local',
@@ -208,35 +215,10 @@ app.layout = dbc.Container(
                             ]),
                             dbc.Row([
                                 dbc.Col([html.P(' ')], width=3),
+                                dbc.Col([html.P('Direction [deg]')], width=2),
                                 dbc.Col([html.P('Min period [s]')], width=2),
                                 dbc.Col([html.P('Max period [s]')], width=2),
                                 dbc.Col([html.P('No. of periods')], width=2)
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    html.H6('Wave directions')
-                                ], width=3),
-                                dbc.Col([
-                                    dcc.Input(id='d_min', type='number', value=0, persistence=True,
-                                              persistence_type='local', style=input_style,
-                                              inputMode='numeric', min=0, max=360, step=90)
-                                ], width=2),
-                                dbc.Col([
-                                    dcc.Input(id='d_max', type='number', value=0, persistence=True,
-                                              persistence_type='local', style=input_style,
-                                              disabled=True, inputMode='numeric')
-                                ], width=2),
-                                dbc.Col([
-                                    dcc.Input(id='n_d', type='number', value=1, persistence=True,
-                                              persistence_type='local', style=input_style,
-                                              disabled=True, inputMode='numeric', step=1)
-                                ], width=2)
-                            ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Min dir [deg]')], width=2),
-                                dbc.Col([html.P('Max dir [deg]')], width=2),
-                                dbc.Col([html.P('No. of directions')], width=2)
                             ]),
                             dbc.Row([
                                 dbc.Col([
@@ -287,22 +269,8 @@ app.layout = dbc.Container(
                                 dbc.Col([html.P('Gamma [-]')], width=2)
                             ]),
                         ])
-                    ], style={'height': '60vh'})
+                    ])
                 ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.P([
-                                    html.A("Source code, ", href="https://github.com/arnavdoss/pyRAO",
-                                           style={'color': Navy}),
-                                    html.A("Plot.ly & ", href="https://plotly.com/", style={'color': Navy}),
-                                    html.A("Dash", href="https://plotly.com/dash/", style={'color': Navy})
-                                ]),
-                            ], style={'height': '8vh'})
-                        ])
-                    ], style={'width': 12, 'padding': 15})
-                ])
             ], width=5),
             dbc.Col([
                 dbc.Card([
@@ -338,23 +306,23 @@ app.layout = dbc.Container(
                                 html.Div(id='tabs-content-inline')
                             ])
                         ], width=12)
-                    ], style={'height': '81vh', 'overflow': 'auto'})
+                    ], style={'overflow': 'auto'})
                 ])
             ], width=7)
         ]),
-    ], fluid=True, style={'height': '90vh', 'padding': '10px', 'width': '95vw'})
+    ], fluid=True, style={'padding': '10px'})
 
 
 @app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
-                  Input('run_button', 'n_clicks'),
-                  Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-                  Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
-                  Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
-                  Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('d_max', 'value'),
-                  Input('n_d', 'value'), Input('water_depth', 'value'), Input('rho_water', 'value')
-              ])
-def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, d_max, n_d,
-             water_depth, rho_water):
+    Input('run_button', 'n_clicks'),
+    Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
+    Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+    Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
+    Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('water_depth', 'value'),
+    Input('rho_water', 'value')
+])
+def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min,
+                     water_depth, rho_water):
     ctx = dash.callback_context
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -374,8 +342,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
             't_max': t_max,
             'n_t': n_t,
             'd_min': d_min,
-            'd_max': d_max,
-            'n_d': n_d,
+            'd_max': 0,
+            'n_d': 1,
             'water_depth': water_depth,
             'rho_water': rho_water,
             'counter': 0
@@ -396,7 +364,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         return [Values_json, RAOs_json]
 
 
-@app.callback(Output('wrapper_div', 'children'), [Input('Value_data', 'data'), Input('RAO_data', 'data')])
+@app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children')],
+              [Input('Value_data', 'data'), Input('RAO_data', 'data')])
 def run_diff(Values_json, RAOpd_json):
     Valuespd_in = pd.read_json(Values_json)
     RAOpd_in = pd.read_json(RAOpd_json)
@@ -404,24 +373,26 @@ def run_diff(Values_json, RAOpd_json):
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
     if trigger_name == 'Value_data' or 'RAO_data':
-        body = makemesh(Valuespd_in)
+        body, Mk, Ck = makemesh(Valuespd_in)
         omega = np.linspace(float(Valuespd_in["t_min"]), float(Valuespd_in["t_max"]), int(Valuespd_in["n_t"]))
         inputs = Valuespd_in.copy()
         inputs['n_t'] = 1
         count = Valuespd_in['counter']
         inputs['t_min'] = omega[count].tolist()[0]
-        if float(count) < float(Valuespd_in['n_t'])+1:
-            RAO_val, FRAO_val = EOM(body, inputs, show=False).solve()
+        if float(count) < float(Valuespd_in['n_t']) + 1:
+            RAO_val, FRAO_val = EOM(body, Mk, Ck, inputs, show=False).solve()
             RAO_val.insert(0, omega[count].tolist()[0])
             RAOpd_in.loc[len(RAOpd_in)] = RAO_val
             Valuespd_in['counter'] = float(Valuespd_in['counter']) + 1
             figure_RAO = create_figure(RAOpd_in)
             RAOpd_out = RAOpd_in.to_json()
             Values_out = Valuespd_in.to_json()
-            return [
+            progress = np.rint(((float(count) + 1) / float(Valuespd_in['n_t'])) * 100)
+            return [[
                 dcc.Store(id='RAO_data', data=RAOpd_out),
                 dcc.Store(id='Value_data', data=Values_out),
-                dcc.Graph(id='graph', figure=figure_RAO, style={'height': '70vh'}),
+                dcc.Graph(id='graph', figure=figure_RAO, style={'height': '70vh'})],
+                progress, f"{progress} %" if progress >= 5 else ""
             ]
         else:
             raise PreventUpdate
@@ -455,7 +426,10 @@ def makemesh(a):
     faces, vertices = mesh.barge()
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
-    return body
+    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"], a["p_l"], a["p_w"], a["p_h"])
+    faces2, vertices2 = mesh2.barge()
+    Mk, Ck = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz']-a['v_t']), float(a['rho_water']), 9.81)
+    return body, Mk, Ck
 
 
 if __name__ == '__main__':

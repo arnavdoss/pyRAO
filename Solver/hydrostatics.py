@@ -3,25 +3,24 @@ from Solver.meshmaker import meshmaker
 from meshmagick.meshmagick import hydrostatics
 from meshmagick.meshmagick.mesh import Mesh
 
+
 def meshK(faces, vertices, cogx, cogy, cogz, rho_w, g):
     mesh = Mesh(vertices, faces)
     HS = hydrostatics.compute_hydrostatics(mesh, cog=[cogx, cogy, cogz], rho_water=rho_w, grav=g)
-    print(HS)
     CM = np.zeros((6, 6), float)
     for a in range(3):
         CM[a, a] = HS['disp_mass']
     IM = np.array([
-        [HS['Ixx'], HS['Ixy'], HS['Ixz']],
-        [HS['Ixy'], HS['Iyy'], HS['Iyz']],
-        [HS['Ixz'], HS['Iyz'], HS['Izz']]])
+        [HS['Ixx'], -HS['Ixy'], -HS['Ixz']],
+        [-HS['Ixy'], HS['Iyy'], -HS['Iyz']],
+        [-HS['Ixz'], -HS['Iyz'], HS['Izz']]])
     CK = np.zeros((6, 6), float)
     IK = HS['stiffness_matrix']
     for a in range(3):
         for b in range(3):
             CM[a+3, b+3] = IM[a, b]
             CK[a+2, b+2] = IK[a, b]
-    print(CM)
-    print(CK)
+    return CM, CK
 
 
 if __name__ == '__main__':

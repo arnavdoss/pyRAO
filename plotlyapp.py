@@ -139,13 +139,13 @@ app.layout = dbc.Container(
                                     html.H6('Vessel COG')
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='cogx', type='number', value=0, persistence=True,
-                                              persistence_type='local',
+                                    dcc.Input(id='cogx', type='number', value=0, persistence=False,
+                                              persistence_type='local', disabled=True,
                                               inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='cogy', type='number', value=0, persistence=True,
-                                              persistence_type='local',
+                                    dcc.Input(id='cogy', type='number', value=0, persistence=False,
+                                              persistence_type='local', disabled=True,
                                               inputMode='numeric', style=input_style)
                                 ], width=2),
                                 dbc.Col([
@@ -256,12 +256,12 @@ app.layout = dbc.Container(
                                                 # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
                                             ]),
                                         ]),
-                                    dcc.Tab(label='Output Table', value='tab-2', style=tab_style,
+                                    dcc.Tab(label='Hydrostatics Report', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             dash_table.DataTable(
-                                                id='table', sort_action='native', style_cell={'textAlign': 'center'}
-                                                , export_format='csv'
-                                            )
+                                                id='HS_report', sort_action='native',
+                                                style_cell={'textAlign': 'left'}, style_as_list_view=True),
+                                            # html.Div(id='HS_report'),
                                         ]),
                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
@@ -307,11 +307,35 @@ app.layout = dbc.Container(
                                 html.Div(id='tabs-content-inline')
                             ])
                         ], width=12)
-                    ], style={'overflow': 'auto'})
+                    ])
                 ])
             ], width=7)
         ]),
     ], fluid=True, style={'padding': '10px'})
+
+
+@app.callback([Output('HS_report', 'data'), Output('HS_report', 'columns')], [
+    Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
+    Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+    Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
+    Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('water_depth', 'value'),
+    Input('rho_water', 'value')
+])
+def HSReport(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
+    Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
+                        rho_water)
+    body, Mk, Ck, HS_report = makemesh(Values)
+    HS_report = HS_report.splitlines()
+    output = [html.P('\n \n \n')]
+    for a in range(len(HS_report)):
+        curline = HS_report[a].replace('-', '').replace('\t', '').replace('**', '^').replace('>', '          ').split('          ')
+        if len(curline) == 1:
+            curline.append(' ')
+        output.append(curline)
+    data = pd.DataFrame(output, columns=['Parameter', 'Value'])
+    columns = [{'id': c, 'name': c} for c in data.columns]
+    data = data.to_dict('records')
+    return [data, columns]
 
 
 @app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
@@ -328,27 +352,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
     if trigger_name == 'run_button':
-        Values = {
-            'v_l': v_l,
-            'v_b': v_b,
-            'v_h': v_h,
-            'v_t': v_t,
-            'cogx': cogx,
-            'cogy': cogy,
-            'cogz': cogz,
-            'p_l': p_l,
-            'p_w': p_w,
-            'p_h': p_h,
-            't_min': t_min,
-            't_max': t_max,
-            'n_t': n_t,
-            'd_min': d_min,
-            'd_max': 0,
-            'n_d': 1,
-            'water_depth': water_depth,
-            'rho_water': rho_water,
-            'counter': 0
-        }
+        Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
+                            rho_water)
         RAOs = {
             'Period': 0,
             'Surge': 0,
@@ -362,8 +367,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         Values_json = Valuespd.to_json()
         RAOpd = pd.DataFrame.from_records([RAOs])
         RAOs_json = RAOpd.to_json()
-        global body, Mk, Ck
-        body, Mk, Ck = makemesh(Valuespd)
+        global body, Mk, Ck, HS
+        body, Mk, Ck, HS_report = makemesh(Valuespd)
         return [Values_json, RAOs_json]
 
 
@@ -410,30 +415,57 @@ def create_figure(RAOpd):
                      secondary_y=False, )
     figure.add_trace(go.Scatter(name='Heave', x=RAOpd["Period"].tolist(), y=RAOpd["Heave"].tolist()),
                      secondary_y=False, )
-    figure.add_trace(go.Scatter(name='Roll', x=RAOpd["Period"].tolist(), y=RAOpd["Roll"].tolist()),
+    figure.add_trace(go.Scatter(name='Roll', x=RAOpd["Period"].tolist(), y=np.rad2deg(RAOpd["Roll"].tolist())),
                      secondary_y=True, )
-    figure.add_trace(go.Scatter(name='Pitch', x=RAOpd["Period"].tolist(), y=RAOpd["Pitch"].tolist()),
+    figure.add_trace(go.Scatter(name='Pitch', x=RAOpd["Period"].tolist(), y=np.rad2deg(RAOpd["Pitch"].tolist())),
                      secondary_y=True, )
-    figure.add_trace(go.Scatter(name='Yaw', x=RAOpd["Period"].tolist(), y=RAOpd["Yaw"].tolist()),
+    figure.add_trace(go.Scatter(name='Yaw', x=RAOpd["Period"].tolist(), y=np.rad2deg(RAOpd["Yaw"].tolist())),
                      secondary_y=True, )
     figure.update_layout(title_text='Barge RAO', yaxis=dict(showexponent='all', exponentformat='e'))
-    figure.update_xaxes(title_text='Period [s]')
+    figure.update_xaxes(title_text='Period [s]',
+                        range=[sorted(RAOpd['Period'].tolist())[1], max(RAOpd['Period'].tolist())])
     figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
-    figure.update_yaxes(title_text='Rotational RAOs [rad/m]', secondary_y=True)
+    figure.update_yaxes(title_text='Rotational RAOs [deg/m]', secondary_y=True)
+    figure.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     return figure
 
 
 def makemesh(a):
-    mesh = meshmaker(a["v_l"], a["v_b"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
+    mesh = meshmaker(a["v_l"], a["v_b"], 0, a["v_t"], a["p_l"], a["p_w"], a["p_h"])
     faces, vertices = mesh.barge()
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
-    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"], a["p_l"], a["p_w"], a["p_h"])
+    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
     faces2, vertices2 = mesh2.barge()
-    Mk, Ck = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz'] - a['v_t']),
-                   float(a['rho_water']), 9.81)
-    return body, Mk, Ck
+    Mk, Ck, HS_report = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz']),
+                              float(a['rho_water']), 9.81)
+    return body, Mk, Ck, HS_report
+
+
+def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
+    Values = {
+        'v_l': v_l,
+        'v_b': v_b,
+        'v_h': v_h,
+        'v_t': v_t,
+        'cogx': cogx,
+        'cogy': cogy,
+        'cogz': cogz,
+        'p_l': p_l,
+        'p_w': p_w,
+        'p_h': p_h,
+        't_min': t_min,
+        't_max': t_max,
+        'n_t': n_t,
+        'd_min': d_min,
+        'd_max': 0,
+        'n_d': 1,
+        'water_depth': water_depth,
+        'rho_water': rho_water,
+        'counter': 0
+    }
+    return Values
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

@@ -281,8 +281,8 @@ app.layout = dbc.Container(
                                     dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             html.Div(id='wrapper_div', children=[
-                                                dcc.Store(id='RAO_data', storage_type='session'),
-                                                dcc.Store(id='Value_data', storage_type='session'),
+                                                dcc.Store(id='RAO_data', storage_type='memory'),
+                                                dcc.Store(id='Value_data', storage_type='memory'),
                                                 dcc.Graph(id='graph', style={'height': '70vh'}),
                                                 # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
                                             ]),
@@ -389,8 +389,8 @@ def run_diff(Values_json, RAOpd_json):
             Values_out = Valuespd_in.to_json()
             progress = np.rint(((float(count) + 1) / float(Valuespd_in['n_t'])) * 100)
             return [[
-                dcc.Store(id='RAO_data', data=RAOpd_out, storage_type='session'),
-                dcc.Store(id='Value_data', data=Values_out, storage_type='session'),
+                dcc.Store(id='RAO_data', data=RAOpd_out, storage_type='memory'),
+                dcc.Store(id='Value_data', data=Values_out, storage_type='memory'),
                 dcc.Graph(id='graph', figure=figure_RAO, style={'height': '70vh'})],
                 progress, f"{progress} %" if progress >= 5 else ""
             ]

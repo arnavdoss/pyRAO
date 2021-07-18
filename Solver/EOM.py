@@ -34,32 +34,6 @@ class EOM:
 
         omega = np.linspace(w_min, w_max, int(n_w))
         wave_dir = np.linspace(d_min, d_max, int(n_d))
-
-        # Mk = np.zeros((6, 6))
-        # Mk[0, 0] = mass
-        # Mk[1, 1] = mass
-        # Mk[2, 2] = mass
-        # Mk[3, 3] = (1 / 12) * (v_b ** 2 + v_h ** 2) * mass
-        # Mk[4, 4] = (1 / 12) * (v_h ** 2 + v_l ** 2) * mass
-        # Mk[5, 5] = (1 / 12) * (v_l ** 2 + v_b ** 2) * mass
-        # Mk[4, 5] = -(1 / 12) * (v_l * v_h) * mass
-        # Mk[5, 3] = Mk[4, 5]
-        # Mk[5, 4] = -(1 / 12) * (v_b * v_h) * mass
-        # Mk[4, 3] = Mk[5, 4]
-        #
-        # Ck = np.zeros((6, 6))
-        # Ck[2, 2] = Awl
-        # Ck[3, 3] = -(nabla * KG) + (nabla * cobz) + (1 / 12 * np.power(v_b, 3) * np.power(v_l, 3)) + (Awl * cogy ** 2)
-        # Ck[4, 4] = -(nabla * KG) + (nabla * cobz) + (1 / 12 * np.power(v_l, 3) * np.power(v_b, 3)) + (Awl * cogx ** 2)
-        # Ck[2, 3] = Awl * cogy
-        # Ck[3, 2] = Ck[2, 3]
-        # Ck[2, 4] = -Awl * cogx
-        # Ck[4, 2] = Ck[2, 4]
-        # Ck[3, 4] = -Awl * cogx * cogy
-        # Ck[4, 3] = Ck[3, 4]
-        # Ck[3, 5] = (nabla - nabla) * cogx
-        # Ck[4, 5] = (nabla - nabla) * cogy
-        # Ck = Ck * rho_water * grav_acc
         CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz-v_t, self.show)
         RAO = self.solveeom(w_min, self.Mk, np.array(CM[w_min]), np.array(CA[w_min]), self.Ck, Fex[w_min])

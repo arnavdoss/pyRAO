@@ -71,7 +71,8 @@ app.layout = dbc.Container(
                             ], width=2, align="start"),
                             dbc.Col([
                                 html.H3('pyRAO', style={'color': Aqua}),
-                                html.H6('Open-source diffraction app with Capytaine & Dash', style={'color': Aqua})
+                                html.H6('Open-source diffraction app with Capytaine, Meshmagick & Dash',
+                                        style={'color': Aqua})
                             ], width=10, align="start"),
                         ])
                     ])
@@ -81,21 +82,16 @@ app.layout = dbc.Container(
                 ]),
                 dbc.Row([
                     dbc.Col([
-                        html.Div([
-                            html.Button(id='run_button', style=button_style, children=[
-                                html.Img(height='50px ', title='Begin diffraction analysis',
-                                         src=app.get_asset_url('start_icon.svg'))])
-                        ], style={'align-items': 'center'}),
-                    ], width=2),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    dbc.Progress(id='progress_bar', style={"height": "10px"}),
-                                ]),
-                            ])
-                        ])
-                    ], width=10)
+                        dbc.InputGroup([
+                            dbc.InputGroupAddon(
+                                html.Button(id='run_button', style=button_style, children=[
+                                    html.Img(height='50px ', title='Begin diffraction analysis',
+                                             src=app.get_asset_url('start_icon.svg'))]), addon_type="prepend"
+                            ), dbc.Progress(id='progress_bar',
+                                            style={"height": "40px", "width": "90%", 'position': 'absolute',
+                                                   'top': '10%', 'right': '0%'}),
+                        ], style={'width': '100%'})
+                    ], width=12)
                 ]),
                 dbc.Row([
                     html.H1(" ")
@@ -109,32 +105,34 @@ app.layout = dbc.Container(
                                     html.H6('Vessel dimensions')
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='v_l', type='number', value=122, persistence=True,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='v_l', type='number', value=122, persistence=True,
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Length [m]', html_for='v_l')
+                                    ]),
+
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='v_b', type='number', value=32, persistence=True,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='v_b', type='number', value=32, persistence=True,
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Beam [m]', html_for='v_b')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='v_h', type='number', value=8, persistence=True,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='v_h', type='number', value=8, persistence=True,
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Height [m]', html_for='v_h')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='v_t', type='number', value=4.9, persistence=True,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='v_t', type='number', value=4, persistence=True,
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Draft [m]', html_for='v_t')
+                                    ]),
                                 ], width=2)
-                            ]),
-                            dbc.Row([
-                                dbc.Col([html.A(' ')], width=3),
-                                dbc.Col([html.A('Length [m]')], width=2),
-                                dbc.Col([html.A('Breadth [m]')], width=2),
-                                dbc.Col([html.A('Height [m]')], width=2),
-                                dbc.Col([html.A('Draft [m]')], width=2),
                             ]),
                             dbc.Row([
                                 dbc.Col([
@@ -239,35 +237,6 @@ app.layout = dbc.Container(
                                 dbc.Col([html.P('Depth [m]')], width=2),
                                 dbc.Col([html.P('Density [kg/m^3]')], width=4)
                             ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    html.H6('Wave properties')
-                                ], width=3),
-                                dbc.Col([
-                                    dcc.Input(id='Hs', type='number', value=2,
-                                              persistence=True,
-                                              persistence_type='local', inputMode='numeric',
-                                              style=input_style)
-                                ], width=2),
-                                dbc.Col([
-                                    dcc.Input(id='Tp', type='number', value=5.1,
-                                              persistence=True,
-                                              persistence_type='local', inputMode='numeric',
-                                              style=input_style)
-                                ], width=2),
-                                dbc.Col([
-                                    dcc.Input(id='gamma', type='number', value=3.3,
-                                              persistence=True,
-                                              persistence_type='local', inputMode='numeric',
-                                              style=input_style)
-                                ], width=2),
-                            ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Hs [m]')], width=2),
-                                dbc.Col([html.P('Tp [s]')], width=2),
-                                dbc.Col([html.P('Gamma [-]')], width=2)
-                            ]),
                         ])
                     ])
                 ]),
@@ -296,6 +265,38 @@ app.layout = dbc.Container(
                                         ]),
                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
+                                            dbc.Row([
+                                                html.H1(' ')
+                                            ]),
+                                            dbc.Row([
+                                                dbc.Col([
+                                                    html.H6('Wave properties')
+                                                ], width=3),
+                                                dbc.Col([
+                                                    dcc.Input(id='Hs', type='number', value=2,
+                                                              persistence=True,
+                                                              persistence_type='local', inputMode='numeric',
+                                                              style=input_style)
+                                                ], width=2),
+                                                dbc.Col([
+                                                    dcc.Input(id='Tp', type='number', value=5.1,
+                                                              persistence=True,
+                                                              persistence_type='local', inputMode='numeric',
+                                                              style=input_style)
+                                                ], width=2),
+                                                dbc.Col([
+                                                    dcc.Input(id='gamma', type='number', value=3.3,
+                                                              persistence=True,
+                                                              persistence_type='local', inputMode='numeric',
+                                                              style=input_style)
+                                                ], width=2),
+                                            ]),
+                                            dbc.Row([
+                                                dbc.Col([html.P(' ')], width=3),
+                                                dbc.Col([html.P('Hs [m]')], width=2),
+                                                dbc.Col([html.P('Tp [s]')], width=2),
+                                                dbc.Col([html.P('Gamma [-]')], width=2)
+                                            ]),
                                             dbc.Row([
                                                 dcc.Graph(
                                                     id='response_graph', style={'height': '70vh'}
@@ -361,6 +362,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         Values_json = Valuespd.to_json()
         RAOpd = pd.DataFrame.from_records([RAOs])
         RAOs_json = RAOpd.to_json()
+        global body, Mk, Ck
+        body, Mk, Ck = makemesh(Valuespd)
         return [Values_json, RAOs_json]
 
 
@@ -373,7 +376,6 @@ def run_diff(Values_json, RAOpd_json):
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
     if trigger_name == 'Value_data' or 'RAO_data':
-        body, Mk, Ck = makemesh(Valuespd_in)
         omega = np.linspace(float(Valuespd_in["t_min"]), float(Valuespd_in["t_max"]), int(Valuespd_in["n_t"]))
         inputs = Valuespd_in.copy()
         inputs['n_t'] = 1
@@ -428,7 +430,8 @@ def makemesh(a):
     body = cpt.FloatingBody(mesh=mesh, name="barge")
     mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"], a["p_l"], a["p_w"], a["p_h"])
     faces2, vertices2 = mesh2.barge()
-    Mk, Ck = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz']-a['v_t']), float(a['rho_water']), 9.81)
+    Mk, Ck = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz'] - a['v_t']),
+                   float(a['rho_water']), 9.81)
     return body, Mk, Ck
 
 

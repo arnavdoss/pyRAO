@@ -1,0 +1,5 @@
+capytaine~=1.2.1
+dash~=1.19.0
+dash-vtk
+
+

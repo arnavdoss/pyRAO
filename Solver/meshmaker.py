@@ -2,9 +2,10 @@ import numpy as np
 
 class meshmaker:
 
-    def __init__(self, length, beam, draft, xres, yres, zres):
+    def __init__(self, length, beam, height, draft, xres, yres, zres):
         self.length = length
         self.beam = beam
+        self.height = height
         self.draft = draft
         self.xres = xres
         self.yres = yres
@@ -13,6 +14,7 @@ class meshmaker:
     def barge(self):
         length = float(self.length)
         beam = float(self.beam)
+        height = float(self.height)
         draft = float(self.draft)
         xres = float(self.xres)
         yres = float(self.yres)
@@ -64,7 +66,7 @@ class meshmaker:
         # Make arrays for the dimensions
         xvals = np.round(np.linspace(-length/2, length/2, int(np.ceil(length/xres))+1), 3)
         yvals = np.round(np.linspace(-beam/2, beam/2, int(np.floor(beam/yres))+1), 3)
-        zvals = np.round(np.linspace(0, -draft, int(np.floor(draft/zres))+1), 3)
+        zvals = np.round(np.linspace(height, -draft, int(np.floor(draft/zres))+1), 3)
 
         locval = 0
         vertices = []

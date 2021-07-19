@@ -347,6 +347,23 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         body, Mk, Ck, HS_report = makemesh(Valuespd)
         return [Values_json, RAOs_json]
 
+# #         RAOpd, FRAO = initialize_calc(Values)
+# #         columns = [{"name": i, "id": i} for i in RAOpd.columns]
+# #         data = RAOpd.to_dict('records')
+# #         style_data_conditional = [
+# #             {
+# #                 'if': {'row_index': 'odd'},
+# #                 'backgroundColor': Gray}
+# #         ]
+# #         graph = create_figure(RAOpd)
+# #         RAO_json = RAOpd.to_json()
+# #         graph_FRAO = create_figure(FRAO)
+# #         graph_FRAO.update_layout(title_text='Barge Force RAO', yaxis=dict(showexponent='all', exponentformat='e'))
+# #         graph_FRAO.update_xaxes(title_text='Period [s]')
+# #         graph_FRAO.update_yaxes(title_text='Translational Force RAOs [N/m]', secondary_y=False)
+# #         graph_FRAO.update_yaxes(title_text='Rotational Force RAOs [N.rad/m]', secondary_y=True)
+# #         return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
+
 
 @app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children')],
               [Input('Value_data', 'data'), Input('RAO_data', 'data'), Input('interval', 'n_intervals')])

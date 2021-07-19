@@ -20,7 +20,7 @@ from Solver.hydrostatics_wrapper import meshK
 
 # external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None)
 # app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
 
 Aqua = '#00ADEF'
@@ -100,143 +100,163 @@ app.layout = dbc.Container(
                 dbc.Card([
                     dbc.CardBody([
                         html.Div([
-                            # html.H4("Inputs", style={'color': Navy}),
-                            dbc.Row([
+                            dbc.Row(form=True, children=[
                                 dbc.Col([
-                                    html.H6('Vessel dimensions')
+                                    dbc.FormGroup([
+                                        html.H6('Barge global dimensions')
+                                    ])
                                 ], width=3),
                                 dbc.Col([
                                     dbc.FormGroup([
-                                        dbc.Input(id='v_l', type='number', value=122, persistence=False,
+                                        dbc.Input(id='v_l', type='number', value=100, persistence=False, bs_size='sm',
                                                   persistence_type='local', inputMode='numeric', style=input_style),
-                                        dbc.Label('Length [m]', html_for='v_l')
+                                        dbc.Label('Length [m]', html_for='v_l', size='sm')
                                     ]),
 
                                 ], width=2),
                                 dbc.Col([
                                     dbc.FormGroup([
-                                        dbc.Input(id='v_b', type='number', value=32, persistence=False,
+                                        dbc.Input(id='v_b', type='number', value=100, persistence=False, bs_size='sm',
                                                   persistence_type='local', inputMode='numeric', style=input_style),
-                                        dbc.Label('Beam [m]', html_for='v_b')
+                                        dbc.Label('Beam [m]', html_for='v_b', size='sm')
                                     ]),
                                 ], width=2),
                                 dbc.Col([
                                     dbc.FormGroup([
-                                        dbc.Input(id='v_h', type='number', value=8, persistence=False,
+                                        dbc.Input(id='v_h', type='number', value=10, persistence=False, bs_size='sm',
                                                   persistence_type='local', inputMode='numeric', style=input_style),
-                                        dbc.Label('Height [m]', html_for='v_h')
+                                        dbc.Label('Height [m]', html_for='v_h', size='sm')
                                     ]),
                                 ], width=2),
                                 dbc.Col([
                                     dbc.FormGroup([
-                                        dbc.Input(id='v_t', type='number', value=4, persistence=False,
+                                        dbc.Input(id='v_t', type='number', value=5, persistence=False, bs_size='sm',
                                                   persistence_type='local', inputMode='numeric', style=input_style),
-                                        dbc.Label('Draft [m]', html_for='v_t')
+                                        dbc.Label('Draft [m]', html_for='v_t', size='sm')
                                     ]),
                                 ], width=2)
                             ]),
-                            dbc.Row([
+                            dbc.Row(form=True, children=[
                                 dbc.Col([
-                                    html.H6('Vessel COG')
+                                    dbc.FormGroup([
+                                        html.H6('Vessel COG')
+                                    ])
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='cogx', type='number', value=0, persistence=False,
-                                              persistence_type='local', disabled=True,
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='cogx', type='number', value=0, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', disabled=True,
+                                                  style=input_style),
+                                        dbc.Label('LCG [m]  Midship 0', html_for='cogx', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='cogy', type='number', value=0, persistence=False,
-                                              persistence_type='local', disabled=True,
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='cogy', type='number', value=0, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', disabled=True,
+                                                  style=input_style),
+                                        dbc.Label('TCG [m]  Centerline 0', html_for='cogy', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='cogz', type='number', value=15, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
-                                ], width=2)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='cogz', type='number', value=10, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('VCG [m]   Baseline 0', html_for='cogz', size='sm')
+                                    ]),
+                                ], width=2),
                             ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('LCG [m]    Midship 0')], width=2),
-                                dbc.Col([html.P('TCG [m]    Centerline 0')], width=2),
-                                dbc.Col([html.P('VCG [m]    Ship-Keel 0')], width=2)
-                            ]),
-                            dbc.Row([
+                            dbc.Row(form=True, children=[
                                 dbc.Col([
-                                    html.H6('Mesh panel dimensions')
+                                    dbc.FormGroup([
+                                        html.H6('Mesh panel dimensions')
+                                    ])
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='p_l', type='number', value=4, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='p_l', type='number', value=4, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Length [m]', html_for='p_l', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='p_w', type='number', value=4, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='p_w', type='number', value=4, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Width [m]', html_for='p_w', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='p_h', type='number', value=4, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
-                                ], width=2)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='p_h', type='number', value=2, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Height [m]', html_for='p_h', size='sm')
+                                    ]),
+                                ], width=2),
                             ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Length [m]')], width=2),
-                                dbc.Col([html.P('Width [m]')], width=2),
-                                dbc.Col([html.P('Height [m]')], width=2)
-                            ]),
-                            dbc.Row([
+                            dbc.Row(form=True, children=[
                                 dbc.Col([
-                                    html.H6('Waves')
+                                    dbc.FormGroup([
+                                        html.H6('Waves')
+                                    ])
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='d_min', type='number', value=0, persistence=False,
-                                              persistence_type='local', style=input_style,
-                                              inputMode='numeric', min=0, max=360, step=15)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='d_min', type='number', value=0, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', min=0, max=360,
+                                                  step=15, style=input_style),
+                                        dbc.Label('Direction [deg]', html_for='d_min', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='t_min', type='number', value=1, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='t_min', type='number', value=5, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', min=1,
+                                                  style=input_style),
+                                        dbc.Label('Minimum period [s]', html_for='t_min', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='t_max', type='number', value=20, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='t_max', type='number', value=20, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', min=1,
+                                                  style=input_style),
+                                        dbc.Label('Maximum period [s]', html_for='t_max', size='sm')
+                                    ]),
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='n_t', type='number', value=20, persistence=False,
-                                              persistence_type='local',
-                                              inputMode='numeric', step=1, style=input_style)
-                                ], width=2)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='n_t', type='number', value=20, persistence=False, bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', min=1,
+                                                  style=input_style),
+                                        dbc.Label('No. of periods', html_for='n_t', size='sm')
+                                    ]),
+                                ], width=2),
                             ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Direction [deg]')], width=2),
-                                dbc.Col([html.P('Min period [s]')], width=2),
-                                dbc.Col([html.P('Max period [s]')], width=2),
-                                dbc.Col([html.P('No. of periods')], width=2)
-                            ]),
-                            dbc.Row([
+                            dbc.Row(form=True, children=[
                                 dbc.Col([
-                                    html.H6('Water properties')
+                                    dbc.FormGroup([
+                                        html.H6('Water properties')
+                                    ])
                                 ], width=3),
                                 dbc.Col([
-                                    dcc.Input(id='water_depth', type='number', value=347.8, persistence=False,
-                                              persistence_type='local', inputMode='numeric', style=input_style)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='water_depth', type='number', value=500, persistence=False,
+                                                  bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', style=input_style),
+                                        dbc.Label('Depth [m]', html_for='water_depth', size='sm')
+                                    ]),
+
                                 ], width=2),
                                 dbc.Col([
-                                    dcc.Input(id='rho_water', type='number', value=1025, persistence=False,
-                                              persistence_type='local', disabled=True, inputMode='numeric',
-                                              style=input_style)
-                                ], width=2),
-                            ]),
-                            dbc.Row([
-                                dbc.Col([html.P(' ')], width=3),
-                                dbc.Col([html.P('Depth [m]')], width=2),
-                                dbc.Col([html.P('Density [kg/m^3]')], width=4)
+                                    dbc.FormGroup([
+                                        dbc.Input(id='rho_water', type='number', value=1025, persistence=False,
+                                                  bs_size='sm',
+                                                  persistence_type='local', inputMode='numeric', disabled=True,
+                                                  style=input_style),
+                                        dbc.Label('Density [kg/m^3]', html_for='rho_water', size='sm')
+                                    ]),
+                                ], width=3),
                             ]),
                         ])
                     ])
@@ -255,47 +275,53 @@ app.layout = dbc.Container(
                                                 dcc.Store(id='Value_data'),
                                                 dcc.Graph(id='graph', style={'height': '70vh'}),
                                                 # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
-                                                ]),
                                             ]),
+                                        ]),
                                     dcc.Tab(label='Hydrostatics Report', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             dash_table.DataTable(
-                                                id='HS_report', sort_action='native',
-                                                style_cell={'textAlign': 'left'}, style_as_list_view=True),
-                                            ]),
+                                                id='HS_report', style_cell={'textAlign': 'left'},
+                                                style_as_list_view=True),
+                                        ]),
                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             dbc.Row([
                                                 html.H1(' ')
                                             ]),
-                                            dbc.Row([
+                                            dbc.Row(form=True, children=[
                                                 dbc.Col([
-                                                    html.H6('Wave properties')
+                                                    dbc.FormGroup([
+                                                        html.H6('Wave properties')
+                                                    ])
                                                 ], width=3),
                                                 dbc.Col([
-                                                    dcc.Input(id='Hs', type='number', value=2,
-                                                              persistence=False,
-                                                              persistence_type='local', inputMode='numeric',
-                                                              style=input_style)
+                                                    dbc.FormGroup([
+                                                        dbc.Input(id='Hs', type='number', value=2, persistence=False,
+                                                                  bs_size='sm', persistence_type='local', min=0,
+                                                                  inputMode='numeric', style=input_style),
+                                                        dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
+                                                    ]),
+
                                                 ], width=2),
                                                 dbc.Col([
-                                                    dcc.Input(id='Tp', type='number', value=5.1,
-                                                              persistence=False,
-                                                              persistence_type='local', inputMode='numeric',
-                                                              style=input_style)
+                                                    dbc.FormGroup([
+                                                        dbc.Input(id='Tp', type='number', value=5, persistence=False,
+                                                                  bs_size='sm', persistence_type='local',
+                                                                  inputMode='numeric', min=0, disabled=True,
+                                                                  style=input_style),
+                                                        dbc.Label('Peak period [s]', html_for='Tp', size='sm')
+                                                    ]),
                                                 ], width=2),
                                                 dbc.Col([
-                                                    dcc.Input(id='gamma', type='number', value=3.3,
-                                                              persistence=False,
-                                                              persistence_type='local', inputMode='numeric',
-                                                              style=input_style)
+                                                    dbc.FormGroup([
+                                                        dbc.Input(id='gamma', type='number', value=3.3,
+                                                                  persistence=False,
+                                                                  bs_size='sm', persistence_type='local',
+                                                                  inputMode='numeric', min=0, disabled=True,
+                                                                  style=input_style),
+                                                        dbc.Label('Gamma [s]', html_for='gamma', size='sm')
+                                                    ]),
                                                 ], width=2),
-                                            ]),
-                                            dbc.Row([
-                                                dbc.Col([html.P(' ')], width=3),
-                                                dbc.Col([html.P('Hs [m]')], width=2),
-                                                dbc.Col([html.P('Tp [s]')], width=2),
-                                                dbc.Col([html.P('Gamma [-]')], width=2)
                                             ]),
                                             dbc.Row([
                                                 dcc.Graph(
@@ -311,7 +337,7 @@ app.layout = dbc.Container(
                 ])
             ], width=7)
         ]),
-    ], fluid=True, style={'padding': '10px'})
+    ], fluid=True, style={'padding-top': '15px'})
 
 
 @app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
@@ -346,6 +372,7 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         global body, Mk, Ck
         body, Mk, Ck, HS_report = makemesh(Valuespd)
         return [Values_json, RAOs_json]
+
 
 # #         RAOpd, FRAO = initialize_calc(Values)
 # #         columns = [{"name": i, "id": i} for i in RAOpd.columns]
@@ -453,6 +480,7 @@ def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max
     }
     return Values
 
+
 @app.callback([Output('HS_report', 'data'), Output('HS_report', 'columns')], [
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
     Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
@@ -467,7 +495,8 @@ def HSReport(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, 
     HS_report = HS_report.splitlines()
     output = [html.P('\n \n \n')]
     for a in range(len(HS_report)):
-        curline = HS_report[a].replace('-', '').replace('\t', '').replace('**', '^').replace('>', '          ').split('          ')
+        curline = HS_report[a].replace('-', '').replace('\t', '').replace('**', '^').replace('>', '          ').split(
+            '          ')
         if len(curline) == 1:
             curline.append(' ')
         output.append(curline)
@@ -475,6 +504,7 @@ def HSReport(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, 
     columns = [{'id': c, 'name': c} for c in data.columns]
     data = data.to_dict('records')
     return [data, columns]
+
 
 if __name__ == '__main__':
     app.run_server(debug=False)

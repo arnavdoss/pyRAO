@@ -139,7 +139,7 @@ app.layout = dbc.Container(
                             dbc.Row(form=True, children=[
                                 dbc.Col([
                                     dbc.FormGroup([
-                                        html.H6('Vessel COG')
+                                        html.H6('Barge COG')
                                     ])
                                 ], width=3),
                                 dbc.Col([

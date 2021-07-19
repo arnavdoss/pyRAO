@@ -283,52 +283,52 @@ app.layout = dbc.Container(
                                                 id='HS_report', style_cell={'textAlign': 'left'},
                                                 style_as_list_view=True),
                                         ]),
-                                    dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
-                                            selected_style=tab_selected_style, children=[
-                                            dbc.Row([
-                                                html.H1(' ')
-                                            ]),
-                                            dbc.Row(form=True, children=[
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        html.H6('Wave properties')
-                                                    ])
-                                                ], width=3),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Hs', type='number', value=2, persistence=False,
-                                                                  bs_size='sm', persistence_type='local', min=0,
-                                                                  inputMode='numeric', style=input_style),
-                                                        dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
-                                                    ]),
+#                                     dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
+#                                             selected_style=tab_selected_style, children=[
+#                                             dbc.Row([
+#                                                 html.H1(' ')
+#                                             ]),
+#                                             dbc.Row(form=True, children=[
+#                                                 dbc.Col([
+#                                                     dbc.FormGroup([
+#                                                         html.H6('Wave properties')
+#                                                     ])
+#                                                 ], width=3),
+#                                                 dbc.Col([
+#                                                     dbc.FormGroup([
+#                                                         dbc.Input(id='Hs', type='number', value=2, persistence=False,
+#                                                                   bs_size='sm', persistence_type='local', min=0,
+#                                                                   inputMode='numeric', style=input_style),
+#                                                         dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
+#                                                     ]),
 
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Tp', type='number', value=5, persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Peak period [s]', html_for='Tp', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='gamma', type='number', value=3.3,
-                                                                  persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Gamma [s]', html_for='gamma', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                            ]),
-                                            dbc.Row([
-                                                dcc.Graph(
-                                                    id='response_graph', style={'height': '70vh'}
-                                                )
-                                            ])
-                                        ]),
+#                                                 ], width=2),
+#                                                 dbc.Col([
+#                                                     dbc.FormGroup([
+#                                                         dbc.Input(id='Tp', type='number', value=5, persistence=False,
+#                                                                   bs_size='sm', persistence_type='local',
+#                                                                   inputMode='numeric', min=0, disabled=True,
+#                                                                   style=input_style),
+#                                                         dbc.Label('Peak period [s]', html_for='Tp', size='sm')
+#                                                     ]),
+#                                                 ], width=2),
+#                                                 dbc.Col([
+#                                                     dbc.FormGroup([
+#                                                         dbc.Input(id='gamma', type='number', value=3.3,
+#                                                                   persistence=False,
+#                                                                   bs_size='sm', persistence_type='local',
+#                                                                   inputMode='numeric', min=0, disabled=True,
+#                                                                   style=input_style),
+#                                                         dbc.Label('Gamma [s]', html_for='gamma', size='sm')
+#                                                     ]),
+#                                                 ], width=2),
+#                                             ]),
+#                                             dbc.Row([
+#                                                 dcc.Graph(
+#                                                     id='response_graph', style={'height': '70vh'}
+#                                                 )
+#                                             ])
+#                                         ]),
                                 ], style=tabs_styles),
                                 html.Div(id='tabs-content-inline')
                             ])

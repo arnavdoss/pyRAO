@@ -15,6 +15,11 @@ from Solver.JONSWAP import response
 import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-bootstrap-components
 from dash.exceptions import PreventUpdate
 from Solver.hydrostatics_wrapper import meshK
+import dash_vtk
+from Solver.mesh import Mesh
+import Solver.mmio as mmio
+import vtk
+
 
 # from jupyter_dash import JupyterDash
 
@@ -267,8 +272,14 @@ app.layout = dbc.Container(
                     dbc.CardBody([
                         dbc.Col([
                             html.Div([
-                                dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
-                                    dcc.Tab(label='RAO Plot', value='tab-1', style=tab_style,
+                                dcc.Tabs(id="tabs_object", value='tab-1', children=[
+                                    dcc.Tab(label='Mesh', value='tab-1', style=tab_style,
+                                            selected_style=tab_selected_style, children=[
+                                            html.Div(id='mesh_viewer', style={"width": "100%", "height": "calc(500px)"}, children=[
+                                                html.H1('Mesh viewer loading...')
+                                            ]),
+                                        ]),
+                                    dcc.Tab(label='RAO Plot', value='tab-2', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             html.Div(id='wrapper_div', children=[
                                                 dcc.Store(id='RAO_data'),
@@ -277,60 +288,59 @@ app.layout = dbc.Container(
                                                 # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
                                             ]),
                                         ]),
-                                    dcc.Tab(label='Hydrostatics Report', value='tab-2', style=tab_style,
+                                    dcc.Tab(label='Hydrostatics Report', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style, children=[
                                             dash_table.DataTable(
                                                 id='HS_report', style_cell={'textAlign': 'left'},
                                                 style_as_list_view=True),
                                         ]),
-                                    dcc.Tab(label='Response Plot', value='tab-3', style=tab_style,
-                                            selected_style=tab_selected_style, children=[
-                                            dbc.Row([
-                                                html.H1(' ')
-                                            ]),
-                                            dbc.Row(form=True, children=[
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        html.H6('Wave properties')
-                                                    ])
-                                                ], width=3),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Hs', type='number', value=2, persistence=False,
-                                                                  bs_size='sm', persistence_type='local', min=0,
-                                                                  inputMode='numeric', style=input_style),
-                                                        dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
-                                                    ]),
-
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Tp', type='number', value=5, persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Peak period [s]', html_for='Tp', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='gamma', type='number', value=3.3,
-                                                                  persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Gamma [s]', html_for='gamma', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                            ]),
-                                            dbc.Row([
-                                                dcc.Graph(
-                                                    id='response_graph', style={'height': '70vh'}
-                                                )
-                                            ])
-                                        ]),
+                                    # dcc.Tab(label='Response Plot', value='tab-4', style=tab_style,
+                                    #         selected_style=tab_selected_style, children=[
+                                    #         dbc.Row([
+                                    #             html.H1(' ')
+                                    #         ]),
+                                    #         dbc.Row(form=True, children=[
+                                    #             dbc.Col([
+                                    #                 dbc.FormGroup([
+                                    #                     html.H6('Wave properties')
+                                    #                 ])
+                                    #             ], width=3),
+                                    #             dbc.Col([
+                                    #                 dbc.FormGroup([
+                                    #                     dbc.Input(id='Hs', type='number', value=2, persistence=False,
+                                    #                               bs_size='sm', persistence_type='local', min=0,
+                                    #                               inputMode='numeric', style=input_style),
+                                    #                     dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
+                                    #                 ]),
+                                    #
+                                    #             ], width=2),
+                                    #             dbc.Col([
+                                    #                 dbc.FormGroup([
+                                    #                     dbc.Input(id='Tp', type='number', value=5, persistence=False,
+                                    #                               bs_size='sm', persistence_type='local',
+                                    #                               inputMode='numeric', min=0, disabled=True,
+                                    #                               style=input_style),
+                                    #                     dbc.Label('Peak period [s]', html_for='Tp', size='sm')
+                                    #                 ]),
+                                    #             ], width=2),
+                                    #             dbc.Col([
+                                    #                 dbc.FormGroup([
+                                    #                     dbc.Input(id='gamma', type='number', value=3.3,
+                                    #                               persistence=False,
+                                    #                               bs_size='sm', persistence_type='local',
+                                    #                               inputMode='numeric', min=0, disabled=True,
+                                    #                               style=input_style),
+                                    #                     dbc.Label('Gamma [s]', html_for='gamma', size='sm')
+                                    #                 ]),
+                                    #             ], width=2),
+                                    #         ]),
+                                    #         dbc.Row([
+                                    #             dcc.Graph(
+                                    #                 id='response_graph', style={'height': '70vh'}
+                                    #             )
+                                    #         ])
+                                    #     ]),
                                 ], style=tabs_styles),
-                                html.Div(id='tabs-content-inline')
                             ])
                         ], width=12)
                     ])
@@ -340,7 +350,7 @@ app.layout = dbc.Container(
     ], fluid=True, style={'padding-top': '15px'})
 
 
-@app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
+@app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data'), Output('tabs_object', 'value')], [
     Input('run_button', 'n_clicks'),
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
     Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
@@ -370,8 +380,8 @@ def initialize_value(n_clicks, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p
         RAOpd = pd.DataFrame.from_records([RAOs])
         RAOs_json = RAOpd.to_json()
         global body, Mk, Ck
-        body, Mk, Ck, HS_report = makemesh(Valuespd)
-        return [Values_json, RAOs_json]
+        body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2 = makemesh(Valuespd)
+        return [Values_json, RAOs_json, 'tab-2']
 
 
 # #         RAOpd, FRAO = initialize_calc(Values)
@@ -449,11 +459,11 @@ def makemesh(a):
     faces, vertices = mesh.barge()
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
-    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
+    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"]-a["v_t"], a["v_t"], a["p_l"], a["p_w"], a["p_h"])
     faces2, vertices2 = mesh2.barge()
     Mk, Ck, HS_report = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz']),
                               float(a['rho_water']), 9.81)
-    return body, Mk, Ck, HS_report
+    return body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2
 
 
 def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
@@ -481,17 +491,17 @@ def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max
     return Values
 
 
-@app.callback([Output('HS_report', 'data'), Output('HS_report', 'columns')], [
+@app.callback([Output('HS_report', 'data'), Output('HS_report', 'columns'), Output('mesh_viewer', 'children')], [
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
     Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
     Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
     Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('water_depth', 'value'),
     Input('rho_water', 'value')
 ])
-def HSReport(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
+def UpdOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
     Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
                         rho_water)
-    body, Mk, Ck, HS_report = makemesh(Values)
+    body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2 = makemesh(Values)
     HS_report = HS_report.splitlines()
     output = [html.P('\n \n \n')]
     for a in range(len(HS_report)):
@@ -503,8 +513,34 @@ def HSReport(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, 
     data = pd.DataFrame(output, columns=['Parameter', 'Value'])
     columns = [{'id': c, 'name': c} for c in data.columns]
     data = data.to_dict('records')
-    return [data, columns]
+
+    for b in range(len(faces)):
+        faces[b].insert(0, 4)
+    for c in range(len(faces2)):
+        faces2[c].insert(0, 4)
+    content = dash_vtk.View([
+        dash_vtk.GeometryRepresentation(
+            property={'color': (1, 1, 1)},
+            children=[
+                dash_vtk.PolyData(
+                    points=np.hstack(vertices2),
+                    lines=np.hstack(faces2),
+                ),
+            ],
+        ),
+        dash_vtk.GeometryRepresentation(
+            property={'color': (1, 1, 1)},
+            children=[
+                dash_vtk.PolyData(
+                    points=np.hstack(vertices),
+                    lines=np.hstack(faces),
+                    polys=np.hstack(faces),
+                ),
+            ],
+        ),
+    ])
+    return [data, columns, [content]]
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

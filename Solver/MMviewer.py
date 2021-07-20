@@ -5,7 +5,7 @@
 This module implements a viewer based on VTK.
 """
 
-# import vtk
+import vtk
 from os import getcwd
 from datetime import datetime
 
@@ -28,7 +28,8 @@ class MMViewer:
         self.render_window = vtk.vtkRenderWindow()
         # self.render_window.FullScreenOn() # BUGFIX: It causes the window to fail to open...
         self.render_window.SetSize(1024, 768)
-        self.render_window.SetWindowName("Meshmagick viewer")
+        # self.render_window.SetWindowName("Meshmagick viewer")
+        self.render_window.SetOffScreenRendering(1)
         self.render_window.AddRenderer(self.renderer)
 
         # Building interactor
@@ -402,7 +403,7 @@ class MMViewer:
         self.renderer.ResetCamera()
         self.render_window.Render()
         self.render_window_interactor.Start()
-        # self.render_window_interactor.Initialize()
+        self.render_window_interactor.Initialize()
 
     def hide(self, index):
         if index > len(self.polydatas):

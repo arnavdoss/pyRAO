@@ -360,7 +360,7 @@ def get_hydrostatic_report(hs_data):
 
         return line
 
-    print('\n\n')
+    # print('\n\n')
 
     msg = "HYDROSTATIC REPORT" #(Meshmagick version %s)\n\n" % version
 

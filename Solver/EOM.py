@@ -31,11 +31,12 @@ class EOM:
         water_depth = self.inputs["water_depth"]
         rho_water = self.inputs["rho_water"]
         grav_acc = 9.81
-
+        B44 = self.inputs['B44']
         omega = np.linspace(w_min, w_max, int(n_w))
         wave_dir = np.linspace(d_min, d_max, int(n_d))
         CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz-v_t, self.show)
+        CA[w_min][3][3] = CA[w_min][3][3] + B44
         RAO = self.solveeom(w_min, self.Mk, np.array(CM[w_min]), np.array(CA[w_min]), self.Ck, Fex[w_min])
         FRAO = np.abs(Fex[w_min].tolist()[0])
         return RAO, FRAO

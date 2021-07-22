@@ -920,7 +920,6 @@ class Mesh(object):
         self.viewer.add_polydata(vtk_polydata)
         self.viewer.show()
         self.viewer.finalize()
-        return vtk_polydata
 
     def _connectivity(self):
         """Updates the connectivities of the mesh.

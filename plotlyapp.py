@@ -29,7 +29,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyR
 Aqua = '#00ADEF'
 Navy = '#00306B'
 Gray = '#EBE9E9'
-Signal = 'DD1C1A'
+Signal = '#DD1C1A'
 
 tabs_styles = {
     'height': '44px',
@@ -47,7 +47,7 @@ tab_style = {
 }
 
 tab_selected_style = {
-    'border': '2px solid #00306B',
+    'border': '2px solid #00ADEF',
     # 'border-top-left-radius': '10px',
     'border-radius': '10px',
     'backgroundColor': Gray,
@@ -112,7 +112,7 @@ app.layout = dbc.Container(
                     ], width=12)
                 ]),
                 dbc.Card([
-                    dbc.CardBody([
+                    dbc.CardBody(style={'overflow': 'auto', 'height': '75vh'}, children=[
                         dbc.FormGroup([
                             dbc.Label('Options', width=3, html_for='add_att'),
                             dbc.Col([
@@ -278,7 +278,9 @@ app.layout = dbc.Container(
                                         ]),
                                     dcc.Tab(label='Hydrostatics Report', value='tab-3', style=tab_style,
                                             selected_style=tab_selected_style,
-                                            children=[html.Div(id='dbc_table', style={'backgroundColor': 'white'})]),
+                                            children=[html.Div(id='dbc_table',
+                                                               style={'backgroundColor': 'white', 'overflow': 'auto',
+                                                                      'height': '82vh'})]),
                                     # dcc.Tab(label='Response Plot', value='tab-4', style=tab_style, disabled=False,
                                     #         selected_style=tab_selected_style, children=[
                                     #         dbc.Row([
@@ -398,16 +400,18 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
     Valuespd_in = pd.read_json(Values_json)
     RAOpd_in = pd.read_json(RAOpd_json)
     omega = np.linspace(float(Valuespd_in["t_min"]), float(Valuespd_in["t_max"]), int(Valuespd_in["n_t"]))
-    inputs = Valuespd_in.copy()
-    inputs['n_t'] = 1
     count = Valuespd_in['counter']
-    inputs['t_min'] = omega[count].tolist()[0]
     if float(count) <= float(Valuespd_in['n_t']) + 1:
+        progress = np.rint(((float(count) + 1) / float(Valuespd_in['n_t'])) * 100)
+        inputs = Valuespd_in.copy()
+        inputs['n_t'] = 1
+        inputs['t_min'] = omega[count].tolist()[0]
+        if run_damped == ['YES'] and float(Valuespd_in['B44']) == 0:
+            inputs['d_min'] = 90
         RAO_val, FRAO_val = EOM(global_body, Mk, Ck, inputs, show=False).solve()
         RAO_val.insert(0, omega[count].tolist()[0])
         RAOpd_in.loc[len(RAOpd_in)] = RAO_val
         Valuespd_in['counter'] = float(Valuespd_in['counter']) + 1
-        progress = np.rint(((float(count) + 1) / float(Valuespd_in['n_t'])) * 100)
         if progress == 100 and run_damped == ['YES'] and float(Valuespd_in['B44']) == 0:
             run_damped_out = run_damped
             B44 = damptheroll(Valuespd_in, RAOpd_in, Cm, pct_crit)
@@ -427,15 +431,18 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
             Valuespd_in = pd.DataFrame.from_records([Values])
             RAOpd_in = pd.DataFrame.from_records([RAOs])
             figure_RAO = create_empty_figure()
-            figure_title = f"Damped barge RAO with additional roll damping of {pct_crit}% of critical damping"
+            figure_title = f"Calculating roll damping"
         else:
             B44 = float(Valuespd_in['B44'])
             run_damped_out = run_damped
             figure_RAO = create_figure(RAOpd_in)
             if float(Valuespd_in['B44']) == 0:
-                figure_title = f"Undamped barge RAO"
+                if run_damped == ['YES']:
+                    figure_title = f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"
+                else:
+                    figure_title = f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"
             else:
-                figure_title = f"Damped barge RAO with additional roll damping of {pct_crit}% of critical damping"
+                figure_title = f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"
         RAOpd_out = RAOpd_in.to_json()
         Values_out = Valuespd_in.to_json()
         return [[

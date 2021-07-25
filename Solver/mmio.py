@@ -1356,28 +1356,50 @@ def write_VTK(filename, vertices, faces):
 
 
 def write_OBJ(filename, vertices, faces):
-    
+
     with open(filename, 'w') as ofile:
-        
+
         # HEADER
         ofile.write("# Wavefront OBJ file exported by Meshmagick (Copyright Ecole Centrale de Nantes)\n")
         ofile.write("# File Created: %s\n\n\n" % time.strftime('%c'))
         ofile.write("# Vertices: %u\n\n" % vertices.shape[0])
-    
+
         for vertex in vertices:
             ofile.write("v  %15.6f\t%15.6f\t%15.6f\n" % (vertex[0], vertex[1], vertex[2]))
-        
+
         ofile.write("\n\n\n# Faces: %u\n\n" % faces.shape[0])
         for face in faces:
             ofile.write("f  %10u  %10u  %10u" % (face[0]+1, face[1]+1, face[2]+1))
-            
+
             if face[0] == face[-1]:
                 # Triangle
                 ofile.write("\n")
             else:
                 # Quadrangle
                 ofile.write("  %10u\n" % (face[-1]+1))
-                
+
+# def write_OBJ(vertices, faces):
+#     ofile = []
+#
+#     # HEADER
+#     ofile.append("# Wavefront OBJ file exported by Meshmagick (Copyright Ecole Centrale de Nantes)\n")
+#     ofile.append("# File Created: %s\n\n\n" % time.strftime('%c'))
+#     ofile.append("# Vertices: %u\n\n" % vertices.shape[0])
+#
+#     for vertex in vertices:
+#         ofile.append("v  %15.6f\t%15.6f\t%15.6f\n" % (vertex[0], vertex[1], vertex[2]))
+#
+#     ofile.append("\n\n\n# Faces: %u\n\n" % faces.shape[0])
+#     for face in faces:
+#         ofile.append("f  %10u  %10u  %10u" % (face[0] + 1, face[1] + 1, face[2] + 1))
+#
+#         if face[0] == face[-1]:
+#             # Triangle
+#             ofile.append("\n")
+#         else:
+#             # Quadrangle
+#             ofile.append("  %10u\n" % (face[-1] + 1))
+#     return ofile
 
 def _build_vtkUnstructuredGrid(vertices, faces):
     """Internal function that builds a VTK object for manipulation by the VTK library.

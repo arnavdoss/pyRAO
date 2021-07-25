@@ -21,7 +21,7 @@ def meshK(faces, vertices, cogx, cogy, cogz, rho_w, g):
         for b in range(3):
             CM[a+3, b+3] = IM[a, b]
             CK[a+2, b+2] = IK[a, b]
-    return CM, CK, HS_report
+    return CM, CK, HS_report, HS
 
 
 if __name__ == '__main__':

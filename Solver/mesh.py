@@ -10,7 +10,7 @@ TODO: mettre des examples d'utilisation
 import numpy as np
 import math
 import copy
-# import vtk
+import vtk
 from itertools import count
 from warnings import warn
 

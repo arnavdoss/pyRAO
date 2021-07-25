@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # Ref. [1] Naval_Empirical calculation of roll damping for shipsBarges (\\twd-fs01\data\Library\20 THEORY AND LITERATURE\00 Literature\Roll Damping\Literature\Company's database)
 # Ref. [2] 20121108-OCTOPUS-Theoretical-Manual_ABB (B:\ICT\Marine\Octopus\V6.4.14)
@@ -201,17 +201,17 @@ if __name__ == '__main__':
 
 	damping = IkedaAdditionalDamping(L, B, D, VCG, GMX, Troll, disp, Cm)
 	print(damping)
-	roll1 = damping.Roll_amplitude(6.06)
-	roll2 = damping.Roll_amplitude(Pct_crit)
-	rollfwd = damping.ForwardSpeedB44(speed, Pct_crit, PotentialDamp0kt)
-	print("\n\nSignificant roll amplitude (@6.06% crit): {0:.2f} deg".format(roll1))
-	print("Significant roll amplitude (@{0:.2f}% crit)".format(Pct_crit, damping.B44(Pct_crit)))	
-	print("B44 eddy damping (@10kt): {0:.2f} t*m^2/s".format(damping.ForwardSpeedEddy(Pct_crit, speed)))	
-	print("B44 potential damping (@10kt): {0:.2f} t*m^2/s".format(damping.ForwardSpeedPotential(PotentialDamp0kt, speed)))	
-	print("B44 Lift damping (@10kt): {0:.2f} t*m^2/s".format(damping.LiftDamping(speed)))	
-	print("Forward speed b44 damping (@10kt): {0:.2f} t*m^2/s".format(rollfwd))
-	speeds = np.arange(1,20.1,1)
-	damping.PlotDampingGraph(speeds)
+	# roll1 = damping.Roll_amplitude(6.06)
+	# roll2 = damping.Roll_amplitude(Pct_crit)
+	# rollfwd = damping.ForwardSpeedB44(speed, Pct_crit, PotentialDamp0kt)
+	# print("\n\nSignificant roll amplitude (@6.06% crit): {0:.2f} deg".format(roll1))
+	# print("Significant roll amplitude (@{0:.2f}% crit)".format(Pct_crit, damping.B44(Pct_crit)))
+	# print("B44 eddy damping (@10kt): {0:.2f} t*m^2/s".format(damping.ForwardSpeedEddy(Pct_crit, speed)))
+	# print("B44 potential damping (@10kt): {0:.2f} t*m^2/s".format(damping.ForwardSpeedPotential(PotentialDamp0kt, speed)))
+	# print("B44 Lift damping (@10kt): {0:.2f} t*m^2/s".format(damping.LiftDamping(speed)))
+	# print("Forward speed b44 damping (@10kt): {0:.2f} t*m^2/s".format(rollfwd))
+	# speeds = np.arange(1,20.1,1)
+	# damping.PlotDampingGraph(speeds)
 
 
 	

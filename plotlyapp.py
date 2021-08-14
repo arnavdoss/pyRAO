@@ -23,6 +23,7 @@ from Solver.RollDamping import IkedaAdditionalDamping
 # external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None)
+# LUMEN, SANDSTONE, YETI, CERULEAN
 # app.css.append_css({'external_url': app.get_asset_url('stylesheet.css')})
 # app = JupyterDash(__name__, external_stylesheets=[dbc.themes.CERULEAN])
 
@@ -30,6 +31,10 @@ Aqua = '#00ADEF'
 Navy = '#00306B'
 Gray = '#EBE9E9'
 Signal = '#DD1C1A'
+
+heights = {
+    'top_bar': '40px'
+}
 
 tabs_styles = {
     'height': '40px',
@@ -67,343 +72,335 @@ input_style = {
     'textAlign': 'center'
 }
 
-radio_style = {
+main_style = {
     'backgroundColor': '#e9ecef',
     'border-radius': '5px',
     'border': '1px solid #ced4da',
     'vertical-align': 'middle'
 }
 
-app.layout = dbc.Container(
-    [
-        dbc.Row([
-            dcc.Interval(id='interval', n_intervals=0, interval=500),
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader([
-                        dbc.Row([
-                            dbc.Col([
-                                html.Img(
-                                    src=app.get_asset_url('python-logo.svg'),
-                                    alt="Python Logo", width="55dp"),
-                            ], width=1, align="start"),
-                            dbc.Col([
-                                html.H2('pyRAO', style={'color': Aqua}),
-                            ], width=3, align="start"),
-                            dbc.Col([
-                                html.H5('Open-source diffraction app with Capytaine, Meshmagick & Dash'),
-                            ], width=8, align="start"),
-                        ], style={'height': '50px'})
-                    ]),
-                    dbc.CardBody([
-                        dbc.Col([
-                            html.Div([
-                                dcc.Tabs(id="tabs_object", value='tab-1', children=[
-                                    dcc.Tab(label='Mesh', value='tab-1', style=tab_style,
-                                            selected_style=tab_selected_style, children=[
-                                            html.Div(id='mesh_viewer',
-                                                     style={"width": "100%", "height": "calc(100vh - 265px)"},
-                                                     children=[html.H1('Mesh viewer loading...')]),
-                                        ]),
-                                    dcc.Tab(label='RAO Plot', value='tab-2', style=tab_style,
-                                            selected_style=tab_selected_style, children=[
-                                            html.Div(id='bigger_wrapper_div', children=[
-                                                html.Div(id='wrapper_div', children=[
-                                                    dcc.Store(id='RAO_data'),
-                                                    dcc.Store(id='Value_data'),
-                                                    dcc.Graph(id='graph', style={'height': 'calc(100vh - 265px)'}),
-                                                    # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
-                                                ]),
-                                            ]),
-                                        ]),
-                                    dcc.Tab(label='Hydrostatics Report', value='tab-3', style=tab_style,
-                                            selected_style=tab_selected_style,
-                                            children=[html.Div(id='dbc_table',
-                                                               style={'backgroundColor': 'white', 'overflow': 'auto',
-                                                                      'height': 'calc(100vh - 265px)'})]),
-                                    dcc.Tab(label='Response Plot', value='tab-4', style=tab_style, disabled=False,
-                                            selected_style=tab_selected_style, children=[
-                                            dbc.Row([
-                                                html.H1(' ')
-                                            ]),
-                                            dbc.Row(form=True, children=[
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        html.H6('Wave properties')
-                                                    ])
-                                                ], width=3),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Hs', type='number', value=2, persistence=False,
-                                                                  bs_size='sm', persistence_type='local', min=0,
-                                                                  inputMode='numeric', style=input_style),
-                                                        dbc.Label('Wave Height [m]', html_for='Hs', size='sm')
-                                                    ]),
+input_card_header_style = {
+    'height': '50px',
+    'textAlign': 'center',
+}
 
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='Tp', type='number', value=5, persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Peak period [s]', html_for='Tp', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                                dbc.Col([
-                                                    dbc.FormGroup([
-                                                        dbc.Input(id='gamma', type='number', value=3.3,
-                                                                  persistence=False,
-                                                                  bs_size='sm', persistence_type='local',
-                                                                  inputMode='numeric', min=0, disabled=True,
-                                                                  style=input_style),
-                                                        dbc.Label('Gamma [s]', html_for='gamma', size='sm')
-                                                    ]),
-                                                ], width=2),
-                                            ]),
-                                            dbc.Row([
-                                                dcc.Graph(
-                                                    id='response_graph', style={'height': '70vh'}
-                                                )
-                                            ])
-                                        ]),
-                                ], style=tabs_styles),
-                            ])
-                        ], width=12)
-                    ]),
-                    dbc.CardFooter([
-                        dbc.FormGroup([
-                            dbc.Button(id='run_button', outline=True, color='secondary', children=[
-                                html.Img(width='30px ', title='Begin undamped diffraction analysis',
-                                         src=app.get_asset_url('start_icon.svg'))]),
-                            dbc.Progress(id='progress_bar', style={"height": "40px", "width": "90%"}),
-                        ], row=True, style={'height': '25px'}),
-                    ]),
-                ]),
-            ], width=7),
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader([
-                        dbc.FormGroup([
-                            dbc.ButtonGroup([
-                                dbc.Button(id='upload_info', outline=True, color='secondary', children=[
-                                    html.Img(width='25px', src=app.get_asset_url('upload_icon.png'))]),
-                                dbc.Button(id='download_info', outline=True, color='secondary', children=[
-                                    html.Img(height='25px', src=app.get_asset_url('download_icon.png'))]),
-                            ]),
-                            html.H2('|'),
-                            dbc.ButtonGroup([
-                                dbc.Button('Mesh', id='menu_mesh', outline=True, color='primary'),
-                                dbc.Button('Environment', id='menu_env', outline=True, color='primary'),
-                                dbc.Button('Roll Damping', id='menu_B44', outline=True, color='primary'),
-                            ]),
-                        ], row=True, style={'position': 'absolute', 'top': '1px'})
-                    ], style={'height': '50px'}),
-                    dbc.CardBody(style={'overflow': 'auto', 'height': 'calc(100vh - 135px)'}, children=[
-                        dbc.Collapse(id='collapse_mesh', children=[
-                            dbc.Card([
-                                dbc.CardHeader([
-                                dbc.ButtonGroup([
-                                    dbc.Button('Barge', id='mesh_barge', outline=True, color='info'),
-                                    dbc.Button('Upload', id='mesh_upload', outline=True, color='success'),
-                                ], style={'width': '100%'}),
-                                ]),
-                                dbc.Collapse(id='collapse_mesh_barge', children=[
-                                    dbc.CardBody([
-                                        dbc.FormGroup([
-                                            dbc.Label('Barge global dimensions', width=3, html_for='input_vessel'),
-                                            dbc.Col([
-                                                dbc.Input(id='v_l', type='number', value=122, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Length [m]', html_for='v_l', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='v_b', type='number', value=36.6, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Beam [m]', html_for='v_b', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='v_h', type='number', value=7.6, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Height [m]', html_for='v_h', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='v_t', type='number', value=3.625, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Draft [m]', html_for='v_t', size='sm')
-                                            ], width=2)
-                                        ], row=True, id='input_vessel'),
-                                        dbc.FormGroup([
-                                            dbc.Label('Barge COG', width=3, html_for='input_COG'),
-                                            dbc.Col([
-                                                dbc.Input(id='cogx', type='number', value=0, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', disabled=False,
-                                                          style=input_style),
-                                                dbc.Label('LCG [m]  Midship', html_for='cogx', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='cogy', type='number', value=0, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', disabled=False,
-                                                          style=input_style),
-                                                dbc.Label('TCG [m] Centerline', html_for='cogy', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='cogz', type='number', value=18.5, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('VCG [m]   Baseline', html_for='cogz', size='sm')
-                                            ], width=2),
-                                        ], row=True, id='input_COG'),
-                                        dbc.FormGroup([
-                                            dbc.Label('Mesh panel dimensions', width=3, html_for='input_panel'),
-                                            dbc.Col([
-                                                dbc.Input(id='p_l', type='number', value=4, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Length [m]', html_for='p_l', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='p_w', type='number', value=4, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Width [m]', html_for='p_w', size='sm')
-                                            ], width=2),
-                                            dbc.Col([
-                                                dbc.Input(id='p_h', type='number', value=1, persistence=False, bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                                dbc.Label('Height [m]', html_for='p_h', size='sm')
-                                            ], width=2),
-                                        ], row=True, id='input_panel'),
-                                    ])
-                                ]),
-                                dbc.Collapse(id='collapse_mesh_upload', children=[
-                                    dbc.CardBody([
-                                        dcc.Upload(
-                                            id='upload-data',
-                                            children=html.Div(['Drag and Drop or ', html.A(['Select Files'], style={
-                                                "text-decoration": "underline"})]),
-                                            style={'width': '100%', 'height': '60px', 'lineHeight': '60px',
-                                                   'borderWidth': '1px', 'borderStyle': 'dashed',
-                                                   'borderRadius': '5px', 'textAlign': 'center', 'margin': '10px'},
-                                            # Allow multiple files to be uploaded
-                                            multiple=False
-                                        ),
-                                    ])
-                                ]),
-                            ])
-                        ]),
-                        dbc.FormGroup([
-                            dbc.Label('Waves', width=3, html_for='input_wave'),
-                            dbc.Col([
-                                dbc.Input(id='d_min', type='number', value=60, persistence=False, bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', min=0, max=360,
-                                          step=15, style=input_style),
-                                dbc.Label('Direction [deg]', html_for='d_min', size='sm')
-                            ], width=2),
-                            dbc.Col([
-                                dbc.Input(id='t_min', type='number', value=5, persistence=False, bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', min=1,
-                                          style=input_style),
-                                dbc.Label('Minimum period [s]', html_for='t_min', size='sm')
-                            ], width=2),
-                            dbc.Col([
-                                dbc.Input(id='t_max', type='number', value=20, persistence=False, bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', min=1,
-                                          style=input_style),
-                                dbc.Label('Maximum period [s]', html_for='t_max', size='sm')
-                            ], width=2),
-                            dbc.Col([
-                                dbc.Input(id='n_t', type='number', value=20, persistence=False, bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', min=1,
-                                          style=input_style),
-                                dbc.Label('No. of periods', html_for='n_t', size='sm')
-                            ], width=2)
-                        ], row=True, id='input_wave'),
-                        dbc.FormGroup([
-                            dbc.Label('Water properties', width=3, html_for='input_water'),
-                            dbc.Col([
-                                dbc.Input(id='water_depth', type='number', value=50, persistence=False,
-                                          bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', style=input_style),
-                                dbc.Label('Depth [m]', html_for='water_depth', size='sm')
-                            ], width=2),
-                            dbc.Col([
-                                dbc.Input(id='rho_water', type='number', value=1025, persistence=False,
-                                          bs_size='sm',
-                                          persistence_type='local', inputMode='numeric', disabled=True,
-                                          style=input_style),
-                                dbc.Label('Density [kg/m^3]', html_for='rho_water', size='sm')
-                            ], width=3),
-                        ], row=True, id='input_water'),
-                        dbc.FormGroup([
-                            dbc.Label('Options', width=3, html_for='add_att'),
-                            dbc.Col([
-                                dbc.Checklist(options=[{'value': 'YES', 'label': 'Upload Mesh'}], id='run_upload',
-                                              switch=True),
-                            ], width=2, style={'textAlign': 'center'}),
-                            dbc.Col([
-                                dbc.Checklist(options=[{'value': 'YES', 'label': 'B44'}], id='run_damped', switch=True),
-                            ], width=2, style={'textAlign': 'center'}),
-                        ], row=True, id='add_att'),
-                        dbc.Collapse(id='collapse_upload', is_open=False, children=[
-                            dbc.FormGroup([
-                                dbc.Card([
-                                    dbc.CardHeader([
-                                        dbc.Label('Upload Mesh'),
-                                    ]),
-                                    dbc.CardBody([
+input_card_body_style = {}
 
-                                    ])
-                                ]),
-                            ])
-                        ]),
-                        dbc.Collapse(id='collapse_B44', is_open=False, children=[
-                            dbc.FormGroup([
-                                dbc.Card([
-                                    dbc.CardHeader([
-                                        dbc.Label('Additional roll damping'),
-                                    ]),
-                                    dbc.CardBody([
-                                        dbc.FormGroup([
-                                            dbc.Col([
-                                                html.H1(' '),
-                                                dbc.Input(id='Cm', type='number', value=0.98, persistence=False,
-                                                          bs_size='sm',
-                                                          persistence_type='local', inputMode='numeric',
-                                                          style=input_style),
-                                                dbc.Label('Midship Coefficient ', html_for='Cm', size='sm')
-                                            ], width=6),
-                                            dbc.Col([
-                                                html.H1(' '),
-                                                dbc.Input(id='pct_crit', type='number', value=5, persistence=False,
-                                                          bs_size='sm', persistence_type='local', inputMode='numeric',
-                                                          style=input_style, max=10),
-                                                dbc.Label('[%] of critical damping', html_for='pct_crit', size='sm')
-                                            ], width=6),
-                                        ], row=True)
-                                    ])
-                                ]),
-                            ])
-                        ]),
-                    ]),
-                    dbc.CardFooter([
-                        html.P('© 2021, Arnav Doss', style={'fontSize': '12px', 'textAlign': 'right'})
-                    ], style={'height': '40px'})
+input_card_footer_style = {
+    'height': '60px',
+    'textAlign': 'center',
+}
+
+mesh_viewer = [
+    html.Div(id='mesh_viewer',
+             style={"width": "100%", "height": "100%", 'position': 'absolute', 'top': '50%', 'left': '50%',
+                    'transform': 'translate(-50%, -50%)'})
+]
+run_progress_bar = dbc.FormGroup([
+    dbc.Button('▷', id='run_button', outline=True, color='danger'),
+    dbc.Progress(id='progress_bar', style={"height": "40px", "width": "96%"}),
+], row=True)
+plot_viewer = [
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div(id='wrapper_div', children=[
+                        dcc.Store(id='RAO_data'),
+                        dcc.Store(id='Value_data'),
+                        dcc.Graph(id='graph', style={'height': '100%', 'width': '100%'}),
+                        # dcc.Graph(id='graph_FRAO', style={'height': '70vh'}),
+                    ], style={'height': '40vh', 'width': '100%'}),
+                    # dbc.Collapse([
+                    #     dbc.Row(form=True, children=[
+                    #         dbc.Col([
+                    #             dbc.FormGroup([
+                    #                 html.H6('Wave properties')
+                    #             ])
+                    #         ], width=3),
+                    #         dbc.Col([
+                    #             dbc.FormGroup([
+                    #                 dbc.Input(id='Hs', type='number', value=2, persistence=False,
+                    #                           bs_size='sm', persistence_type='local', min=0,
+                    #                           inputMode='numeric', style=input_style),
+                    #                 dbc.FormText('Wave Height [m]')
+                    #             ]),
+                    #
+                    #         ], width=2),
+                    #         dbc.Col([
+                    #             dbc.FormGroup([
+                    #                 dbc.Input(id='Tp', type='number', value=5, persistence=False,
+                    #                           bs_size='sm', persistence_type='local',
+                    #                           inputMode='numeric', min=0, disabled=True,
+                    #                           style=input_style),
+                    #                 dbc.FormText('Peak period [s]')
+                    #             ]),
+                    #         ], width=2),
+                    #         dbc.Col([
+                    #             dbc.FormGroup([
+                    #                 dbc.Input(id='gamma', type='number', value=3.3,
+                    #                           persistence=False,
+                    #                           bs_size='sm', persistence_type='local',
+                    #                           inputMode='numeric', min=0, disabled=True,
+                    #                           style=input_style),
+                    #                 dbc.FormText('Gamma [s]')
+                    #             ]),
+                    #         ], width=2),
+                    #     ]),
+                    #     dbc.Row([
+                    #         dcc.Graph(
+                    #             id='response_graph', style={'height': '70vh'}
+                    #         )
+                    #     ]),
+                    # ], is_open=False),
                 ]),
-            ], width=5)
+            ], style={'border': f"2px solid white", 'border-radius': '20px'}),
         ]),
-    ], fluid=True, style={'padding-top': '15px'})
+    ])
+]
+report_viewer = [html.Div(id='dbc_table', style={'backgroundColor': 'white', 'overflow': 'auto', 'height': '25vh'})]
+inputs_mesh = [
+    dbc.Collapse(id='collapse_mesh_upload', children=[
+        dbc.CardBody([
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div(['Drag and Drop or ', html.A(['Select Files'], style={
+                    "text-decoration": "underline"})]),
+                style={'width': '100%', 'height': '60px', 'lineHeight': '60px',
+                       'borderWidth': '1px', 'borderStyle': 'dashed',
+                       'borderRadius': '5px', 'textAlign': 'center', 'margin': '10px'},
+                # Allow multiple files to be uploaded
+                multiple=False
+            ),
+        ])
+    ]),
+    dbc.Collapse(id='collapse_mesh_barge', is_open=True, children=[
+        dbc.FormGroup([
+            dbc.Col([
+                dbc.Input(id='v_l', type='number', value=122, persistence=False,
+                          bs_size='sm', persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Length [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='v_b', type='number', value=36.6, persistence=False,
+                          bs_size='sm', persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Beam [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='v_h', type='number', value=7.6, persistence=False,
+                          bs_size='sm', persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Height [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='v_t', type='number', value=3.625, persistence=False,
+                          bs_size='sm', persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Draft [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='p_l', type='number', value=4, persistence=False,
+                          bs_size='sm',
+                          persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Panel-X [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='p_w', type='number', value=4, persistence=False,
+                          bs_size='sm',
+                          persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Panel-Y [m]')
+            ], width=3),
+            dbc.Col([
+                dbc.Input(id='p_h', type='number', value=1, persistence=False,
+                          bs_size='sm',
+                          persistence_type='local', inputMode='numeric',
+                          style=input_style),
+                dbc.FormText('Panel-Z [m]')
+            ], width=3),
+        ], row=True),
+    ])
+]
+inputs_env = [
+    dbc.FormGroup([
+        dbc.Col([
+            dbc.Input(id='t_min', type='number', value=5, persistence=False, bs_size='sm',
+                      persistence_type='local', inputMode='numeric', min=1,
+                      style=input_style),
+            dbc.FormText('Minimum period [s]')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='t_max', type='number', value=20, persistence=False, bs_size='sm',
+                      persistence_type='local', inputMode='numeric', min=1,
+                      style=input_style),
+            dbc.FormText('Maximum period [s]')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='n_t', type='number', value=20, persistence=False, bs_size='sm',
+                      persistence_type='local', inputMode='numeric', min=1,
+                      style=input_style),
+            dbc.FormText('No. of periods')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='d_min', type='number', value=60, persistence=False, bs_size='sm',
+                      persistence_type='local', inputMode='numeric', min=0, max=360,
+                      step=15, style=input_style),
+            dbc.FormText('Direction [deg]')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='water_depth', type='number', value=50, persistence=False,
+                      bs_size='sm',
+                      persistence_type='local', inputMode='numeric', style=input_style),
+            dbc.FormText('Depth [m]')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='rho_water', type='number', value=1025, persistence=False,
+                      bs_size='sm',
+                      persistence_type='local', inputMode='numeric', disabled=True,
+                      style=input_style),
+            dbc.FormText('Density [kg/m^3]')
+        ], width=4),
+    ], row=True)
+]
+inputs_cargo = [
+    dbc.FormGroup([
+        dbc.Col([
+            dbc.Input(id='cogx', type='number', value=0, persistence=False,
+                      bs_size='sm', persistence_type='local', inputMode='numeric',
+                      disabled=False, style=input_style),
+            dbc.FormText('LCG [m]  Midship')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='cogy', type='number', value=0, persistence=False,
+                      bs_size='sm', persistence_type='local', inputMode='numeric',
+                      disabled=False, style=input_style),
+            dbc.FormText('TCG [m] Centerline')
+        ], width=4),
+        dbc.Col([
+            dbc.Input(id='cogz', type='number', value=18.5, persistence=False,
+                      bs_size='sm', persistence_type='local', inputMode='numeric',
+                      style=input_style),
+            dbc.FormText('VCG [m]   Baseline')
+        ], width=4),
+    ], row=True),
+]
+inputs_options = [
+    dbc.Collapse(id='collapse_upload', is_open=False, children=[
+        dbc.FormGroup([
+            dbc.Card([
+                dbc.CardHeader([
+                    dbc.Label('Upload Mesh'),
+                ]),
+                dbc.CardBody([
+
+                ])
+            ]),
+        ])
+    ]),
+    dbc.Collapse(id='collapse_B44', is_open=False, children=[
+        dbc.FormGroup([
+            dbc.Card([
+                dbc.CardHeader([
+                    dbc.Label('Additional roll damping'),
+                ]),
+                dbc.CardBody([
+                    dbc.FormGroup([
+                        dbc.Col([
+                            html.H1(' '),
+                            dbc.Input(id='Cm', type='number', value=0.98, persistence=False,
+                                      bs_size='sm',
+                                      persistence_type='local', inputMode='numeric',
+                                      style=input_style),
+                            dbc.FormText('Midship Coefficient')
+                        ], width=6),
+                        dbc.Col([
+                            html.H1(' '),
+                            dbc.Input(id='pct_crit', type='number', value=5, persistence=False,
+                                      bs_size='sm', persistence_type='local', inputMode='numeric',
+                                      style=input_style, max=10),
+                            dbc.FormText('[%] of critical damping')
+                        ], width=6),
+                    ], row=True)
+                ])
+            ]),
+        ])
+    ]),
+    dbc.Col([
+        dbc.Checklist(options=[{'value': 'YES', 'label': 'Upload Mesh'}], id='run_upload',
+                      switch=True),
+    ], width=2, style={'textAlign': 'center'}),
+    dbc.Col([
+        dbc.Checklist(options=[{'value': 'YES', 'label': 'B44'}], id='run_damped', switch=True),
+    ], width=2, style={'textAlign': 'center'}),
+]
+
+app.layout = dbc.Container([
+    dcc.Interval(id='interval', n_intervals=0, interval=500),
+    html.Div([
+        dbc.ButtonGroup([
+            dbc.Button([html.Img(src=app.get_asset_url('python-logo.svg'), width="20px")], outline=True,
+                       color='primary', size='lg'),
+            dbc.Button('↥', id='upload_info', outline=True, color='primary', size='lg'),
+            dbc.Button('↧', id='download_info', outline=True, color='primary', size='lg'),
+            dbc.Button('M', id='menu_mesh', outline=True, color='primary'),
+            dbc.Button('E', id='menu_env', outline=True, color='primary'),
+            dbc.Button('C', id='menu_lc', outline=True, color='primary'),
+            dbc.Button(['©2021, Arnav Doss'], outline=True, color='primary', size='lg')
+        ], style={'width': '100%'}),
+    ], style={'position': 'absolute', 'top': '0', 'z-index': '3000'}), #position: sticky
+    dbc.Row([
+        dbc.Col([dbc.Card([dbc.CardBody([html.Div(mesh_viewer, style={'height': '40vh'})])])]),
+        dbc.Col(plot_viewer),
+        dbc.Col(report_viewer)
+    ], no_gutters=True, style={'width': '95vw', 'overflow': 'scroll'}),
+    dbc.Row([dbc.Col([run_progress_bar], width={'size': '12', 'offset': '0'})]),
+    dbc.Row([
+        dbc.CardDeck([
+            dbc.Card([
+                dbc.CardHeader([html.P('Mesh')], style=input_card_header_style),
+                dbc.CardBody(inputs_mesh, style=input_card_body_style),
+                dbc.CardFooter([
+                    dbc.ButtonGroup([
+                        dbc.Button('Barge', id='mesh_barge', active=True, outline=True, color='info',
+                                   style={'width': '50%'}),
+                        dbc.Button('Upload mesh', id='mesh_upload', outline=True, color='info', style={'width': '50%'}),
+                    ], style={'width': '100%'}),
+                ], style=input_card_footer_style),
+            ]),
+            dbc.Card([
+                dbc.CardHeader([html.P('Environment')], style=input_card_header_style),
+                dbc.CardBody(inputs_env, style=input_card_body_style),
+                dbc.CardFooter([], style=input_card_footer_style),
+            ]),
+            dbc.Card([
+                dbc.CardHeader([html.P('Cargo')], style=input_card_header_style),
+                dbc.CardBody(inputs_cargo, style=input_card_body_style),
+                dbc.CardFooter([], style=input_card_footer_style),
+            ]),
+            dbc.Card([
+                dbc.CardHeader([html.P('Options')], style=input_card_header_style),
+                dbc.CardBody(inputs_options, style=input_card_body_style),
+                dbc.CardFooter([], style=input_card_footer_style),
+            ]),
+        ])
+    ], no_gutters=True),
+], fluid=True, style={'position': 'relative'})
 
 
 @app.callback([Output('run_button', 'children')], [Input('run_button', 'n_clicks'), Input('Value_data', 'data')])
 def button_image(n, Values_in):
     Values = pd.read_json(Values_in)
-    a = [html.Img(width='30px ', title='Begin undamped diffraction analysis', src=app.get_asset_url('start_icon.svg'))]
     if n and float(Values['counter']) < float(Values['n_t']):
-        return [dbc.Spinner(color='danger', size='md', debounce=500,
+        return [dbc.Spinner(color='danger', size='sm', debounce=500,
                             spinner_style={'position': 'absolute', 'left': '0%', 'backgroundColor': '#E9ECEF'})]
     else:
-        return a
+        return ['▷']
 
 
-@app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data'), Output('tabs_object', 'value')], [
+@app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
     Input('run_button', 'n_clicks'),
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
     Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
@@ -434,7 +431,7 @@ def initialize_value(n1, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_
         RAOs_json = RAOpd.to_json()
         global global_body, Mk, Ck, HS_lock
         global_body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2, HS_lock = makemesh(Valuespd)
-        return [Values_json, RAOs_json, 'tab-2']
+        return [Values_json, RAOs_json]
     else:
         raise PreventUpdate
 
@@ -504,18 +501,18 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
             figure_RAO = create_figure(RAOpd_in)
             if float(Valuespd_in['B44']) == 0:
                 if run_damped == ['YES']:
-                    figure_title = f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"
+                    figure_RAO.update_layout(title=str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"))
                 else:
-                    figure_title = f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"
+                    figure_RAO.update_layout(title=str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"))
             else:
-                figure_title = f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"
+                figure_RAO.update_layout(title=str(
+                    f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"))
         RAOpd_out = RAOpd_in.to_json()
         Values_out = Valuespd_in.to_json()
         return [[
-            html.H5(figure_title, style={'height': '20px'}),
             dcc.Store(id='RAO_data', data=RAOpd_out),
             dcc.Store(id='Value_data', data=Values_out),
-            dcc.Graph(id='graph', figure=figure_RAO, style={'height': 'calc(100vh - 295px)'})],
+            dcc.Graph(id='graph', figure=figure_RAO, style={'height': '100%', 'width': '100%'})],
             progress, f"{progress} %" if progress >= 5 else "", run_damped_out]
     else:
         raise PreventUpdate
@@ -664,14 +661,6 @@ def MESHOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n
                     points=np.hstack(vertices),
                     lines=np.hstack(faces),
                     polys=np.hstack(faces),
-                    # children=[
-                    #     dash_vtk.CellData([
-                    #         dash_vtk.DataArray(
-                    #             name='onCells',
-                    #             values=[0, 1],
-                    #         )
-                    #     ]),
-                    # ]
                 ),
             ],
         ),

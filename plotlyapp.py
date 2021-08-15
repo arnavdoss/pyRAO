@@ -2,10 +2,8 @@
 import dash  # pip install dash
 import dash_core_components as dcc
 import dash_html_components as html
-import stl
 import vtk
 import base64
-import io
 import os
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
@@ -21,7 +19,7 @@ from dash.exceptions import PreventUpdate
 from Solver.hydrostatics_wrapper import meshK
 import Solver.mmio as mmio
 import dash_vtk
-from stl import mesh  # pip install numpy-stl
+#from stl import mesh  # pip install numpy-stl
 from Solver.RollDamping import IkedaAdditionalDamping
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None,

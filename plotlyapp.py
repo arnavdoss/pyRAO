@@ -2,10 +2,7 @@
 import dash  # pip install dash
 import dash_core_components as dcc
 import dash_html_components as html
-import stl
-import vtk
 import base64
-import io
 import os
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
@@ -15,14 +12,11 @@ import capytaine as cpt  # conda install -c conda-forge capytaine
 import numpy as np
 from Solver.EOM import EOM
 from Solver.meshmaker import meshmaker
-from Solver.JONSWAP import response
 import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-bootstrap-components
 from dash.exceptions import PreventUpdate
 from Solver.hydrostatics_wrapper import meshK
-import Solver.mmio as mmio
 import dash_vtk
-from stl import mesh  # pip install numpy-stl
-from Solver.RollDamping import IkedaAdditionalDamping
+# from stl import mesh  # pip install numpy-stl
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None,
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])

@@ -4,7 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import base64
 import os
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ALL, MATCH
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
@@ -14,8 +14,9 @@ from Solver.EOM import EOM
 from Solver.meshmaker import meshmaker
 import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-bootstrap-components
 from dash.exceptions import PreventUpdate
-from Solver.hydrostatics_wrapper import meshK
+from Solver.hydrostatics_wrapper import meshK, disp_calc, COG_shift_cargo
 import dash_vtk
+
 # from stl import mesh  # pip install numpy-stl
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None,
@@ -70,11 +71,33 @@ input_card_header_style = {
     'textAlign': 'center',
 }
 input_card_body_style = {
+    'height': '185px',
+    'textAlign': 'left',
 }
 input_card_footer_style = {
     'height': '10px',
     'textAlign': 'center',
 }
+
+
+def create_empty_figure():
+    figure = make_subplots(specs=[[{"secondary_y": True}]], horizontal_spacing=0, vertical_spacing=0)
+    figure.add_trace(go.Scatter(name='Surge', x=[0, 0], y=[0, 0]), secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Sway', x=[0, 0], y=[0, 0]), secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Heave', x=[0, 0], y=[0, 0]), secondary_y=False, )
+    figure.add_trace(go.Scatter(name='Roll', x=[0, 0], y=[0, 0]), secondary_y=True, )
+    figure.add_trace(go.Scatter(name='Pitch', x=[0, 0], y=[0, 0]), secondary_y=True, )
+    figure.add_trace(go.Scatter(name='Yaw', x=[0, 0], y=[0, 0]), secondary_y=True, )
+    figure.update_layout(yaxis=dict(showexponent='all', exponentformat='e'))
+    figure.update_xaxes(title_text='Period [s]')
+    figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
+    figure.update_yaxes(title_text='Rotational RAOs [deg/m]', secondary_y=True)
+    figure.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    figure.update_layout(title={'text': 'Motion RAOs', 'x': 0.5, 'xanchor': 'center'})
+    figure.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    figure.update_layout(modebar={'orientation': 'h', 'bgcolor': 'white', 'add': 'hovercompare'})
+    return figure
+
 
 mesh_viewer = [
     dbc.Collapse([
@@ -88,9 +111,10 @@ plot_viewer = [
     html.Div(id='wrapper_div', children=[
         dcc.Store(id='RAO_data'),
         dcc.Store(id='Value_data'),
-        dcc.Graph(id='graph', style={'height': '100%', 'width': '100%'}),
+        dcc.Graph(id='graph', figure=create_empty_figure(), style={'height': '100%'},
+                  config={'displayModeBar': True}),
         # dcc.Graph(id='graph_FRAO', style={'height': '50vh'}),
-    ], style={'height': '100%', 'width': '100%'}),
+    ], style={'height': '100%'}),
 ]
 report_viewer = [html.Div(id='dbc_table', style={'backgroundColor': 'white'})]
 inputs_mesh = [
@@ -114,19 +138,19 @@ inputs_mesh = [
                 dbc.Input(id='v_l', type='number', value=122, persistence=False,
                           bs_size='sm', persistence_type='local', inputMode='numeric',
                           style=input_style),
-                dbc.FormText('Length [m]')
+                dbc.FormText('Vessel Length [m]')
             ]),
             dbc.Col([
                 dbc.Input(id='v_b', type='number', value=36.6, persistence=False,
                           bs_size='sm', persistence_type='local', inputMode='numeric',
                           style=input_style),
-                dbc.FormText('Beam [m]')
+                dbc.FormText('Vessel Beam [m]')
             ]),
             dbc.Col([
                 dbc.Input(id='v_h', type='number', value=7.6, persistence=False,
                           bs_size='sm', persistence_type='local', inputMode='numeric',
                           style=input_style),
-                dbc.FormText('Height [m]')
+                dbc.FormText('Vessel Height [m]')
             ]),
             dbc.Col([
                 dbc.Input(id='p_l', type='number', value=4, persistence=False,
@@ -170,19 +194,19 @@ inputs_env = [
             dbc.Input(id='n_t', type='number', value=20, persistence=False, bs_size='sm',
                       persistence_type='local', inputMode='numeric', min=1,
                       style=input_style),
-            dbc.FormText('No. of periods')
+            dbc.FormText('Number of periods')
         ]),
         dbc.Col([
             dbc.Input(id='d_min', type='number', value=60, persistence=False, bs_size='sm',
                       persistence_type='local', inputMode='numeric', min=0, max=360,
                       step=15, style=input_style),
-            dbc.FormText('Direction [deg]')
+            dbc.FormText('Wave Direction [deg]')
         ]),
         dbc.Col([
             dbc.Input(id='water_depth', type='number', value=50, persistence=False,
                       bs_size='sm',
                       persistence_type='local', inputMode='numeric', style=input_style),
-            dbc.FormText('Depth [m]')
+            dbc.FormText('Water Depth [m]')
         ]),
         dbc.Col([
             dbc.Input(id='rho_water', type='number', value=1025, persistence=False,
@@ -199,53 +223,41 @@ inputs_vessel = [
             dbc.Input(id='cogx', type='number', value=0, persistence=False,
                       bs_size='sm', persistence_type='local', inputMode='numeric',
                       disabled=False, style=input_style),
-            dbc.FormText('LCG [m]  Midship')
+            dbc.FormText('LCG [m]  Midship 0')
         ]),
         dbc.Col([
             dbc.Input(id='cogy', type='number', value=0, persistence=False,
                       bs_size='sm', persistence_type='local', inputMode='numeric',
                       disabled=False, style=input_style),
-            dbc.FormText('TCG [m] Centerline')
+            dbc.FormText('TCG [m] Centerline 0')
         ]),
         dbc.Col([
             dbc.Input(id='cogz', type='number', value=18.5, persistence=False,
                       bs_size='sm', persistence_type='local', inputMode='numeric',
                       style=input_style),
-            dbc.FormText('VCG [m]   Baseline')
+            dbc.FormText('VCG [m]   Baseline 0')
         ]),
         dbc.Col([
-            dbc.Input(id='v_t', type='number', value=3.625, persistence=False,
+            dbc.Input(id='v_mass', type='number', value=17000, persistence=False,
                       bs_size='sm', persistence_type='local', inputMode='numeric',
                       style=input_style),
-            dbc.FormText('Draft [m]')
+            dbc.FormText('Lightship mass [t]')
         ]),
     ], row=True),
 ]
 inputs_B44 = [
-    dbc.Collapse(id='collapse_B44', is_open=False, children=[
-        dbc.FormGroup([
-            dbc.Col([
-                html.H1(' '),
-                dbc.Input(id='Cm', type='number', value=0.98, persistence=False,
-                          bs_size='sm',
-                          persistence_type='local', inputMode='numeric',
-                          style=input_style),
-                dbc.FormText('Midship Coefficient')
-            ]),
-            dbc.Col([
-                html.H1(' '),
-                dbc.Input(id='pct_crit', type='number', value=10, persistence=False,
-                          bs_size='sm', persistence_type='local', inputMode='numeric',
-                          style=input_style, max=10),
-                dbc.FormText('[%] of critical damping')
-            ]),
-        ], row=True),
-    ], style={'width': '100%'}),
-]
-inputs_cargo = [
-    dbc.Collapse(id='collapse_cargo', is_open=False, children=[
-        'CHECK'
-    ]),
+    dbc.FormGroup([
+        dbc.Col([
+            dbc.Input(id='Cm', type='number', value=0.98, persistence=False, bs_size='sm', disabled=True,
+                      persistence_type='local', inputMode='numeric', style=input_style, max=1, min=0),
+            dbc.FormText('Cm [-]')
+        ]),
+        dbc.Col([
+            dbc.Input(id='pct_crit', type='number', value=10, persistence=False, bs_size='sm', persistence_type='local',
+                      inputMode='numeric', style=input_style, max=10, min=0, disabled=True),
+            dbc.FormText('[%] of critical damping')
+        ]),
+    ], row=True)
 ]
 info_badges = [
     dbc.Badge('©2021, Arnav Doss', color='success'),
@@ -267,27 +279,34 @@ main_header = [
                     dbc.Button('pyRAO', outline=True, color='info', active=True),
                     dbc.Button('↥', id='upload_info', outline=True, color='info'),
                     dbc.Button('↧', id='download_info', outline=True, color='info'),
+                    dbc.Button('⊞', id='add_cargo', outline=True, color='info'),
+                    dbc.Button('🗐', id='open_hs_report', outline=True, color='info'),
                     dbc.Button('▷', id='run_button', outline=True, color='danger'),
                 ], style={'height': '40px'}),
                 html.Div([], style={'width': '10px'}),
-                dbc.Progress(id='progress_bar', style={"height": "40px", 'width': 'calc(100% - 250px)'}),
+                dbc.Progress(id='progress_bar', style={"height": "40px", 'width': 'calc(100% - 325px)'}),
             ], no_gutters=False, style={'width': '100%'}, align='start'),
         ], style={'height': '60px'}),
-    ])
+    ], style={'width': '100%'})
 ]
 
 app.layout = dbc.Container([
     dcc.Interval(id='interval', n_intervals=0, interval=1000),
-    html.Div(main_header, style={'position': 'sticky', 'top': '0', 'z-index': '3000'}),
-    dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
+    html.Div([
+        dbc.Row([dbc.Col(main_header, style={'width': '100%'})], justify='center'),
+        dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
+        dbc.Row([], style={'height': '5px'}),
+    ], style={'position': 'sticky', 'top': '0', 'z-index': '3000'}),
     dbc.Row([
         dbc.Col([
-            dbc.Card([dbc.CardBody(mesh_viewer)], style={'height': '50vh'}),
+            dbc.Card([dbc.CardBody(mesh_viewer, style={'height': '100%'})], style={'height': '60vh'}),
         ], xs=12, sm=12, md=12, lg=6, xl=6),
-        dbc.Col([
-            dbc.Card([dbc.CardBody(plot_viewer)], style={'height': '50vh'}),
-        ], xs=12, sm=12, md=12, lg=6, xl=6),
+        dbc.Col([dbc.Card([dbc.CardBody(plot_viewer, style={'height': '100%'})],
+                          style={'height': '60vh'}), ], xs=12, sm=12, md=12, lg=6, xl=6),
     ], no_gutters=True),
+    dbc.Row([
+        # dbc.Alert('Error', id='alert1', dismissable=False, is_open=False, fade=False)
+    ], style={'height': '5px'}),
     dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -295,8 +314,8 @@ app.layout = dbc.Container([
                     dbc.ButtonGroup([
                         dbc.Button('Barge', id='mesh_barge', active=True, outline=True, color='info',
                                    style={'width': '50%'}, size='sm'),
-                        dbc.Button('Upload mesh', id='mesh_upload', outline=True, color='info', style={'width': '50%'},
-                                   size='sm'),
+                        dbc.Button('Upload mesh', id='mesh_upload', outline=True, color='info',
+                                   style={'width': '50%'}, size='sm', disabled=True),
                     ], style={'width': '100%'}),
                 ], style=input_card_header_style),
                 dbc.CardBody(inputs_mesh, style=input_card_body_style),
@@ -310,39 +329,123 @@ app.layout = dbc.Container([
         ], xs=12, sm=12, md=6, lg=4, xl=3),
         dbc.Col([
             dbc.Card([
-                dbc.CardHeader([html.P('Vessel')], style=input_card_header_style),
-                dbc.ListGroup([
-                    dbc.ListGroupItem(inputs_vessel),
-                    dbc.ListGroupItem([
-                        dbc.Checklist(options=[{'value': 'YES', 'label': 'Additional roll damping (B44)'}],
-                                      id='run_damped', switch=True),
-                    ]),
-                    dbc.ListGroupItem(inputs_B44)
-                ], style={}),
+                dcc.Store(id='v_update_data'),
+                dbc.CardHeader([html.P('Lightship parameters')], style=input_card_header_style),
+                dbc.CardBody(inputs_vessel, style=input_card_body_style),
             ]),
         ], xs=12, sm=12, md=6, lg=4, xl=3),
-        dbc.Col(),
         dbc.Col([
             dbc.Card([
                 dbc.CardHeader([
-                    dbc.Checklist(options=[{'value': 'YES', 'label': 'Additional Cargo'}], id='run_cargo',
-                                  switch=True),
+                    dbc.ButtonGroup([
+                        dbc.Button('Undamped Vessel', id='vessel_undamped', active=True, outline=True, color='info',
+                                   style={'width': '50%'}, size='sm'),
+                        dbc.Button('Roll damped vessel', id='vessel_damped', outline=True, color='info',
+                                   style={'width': '50%'},
+                                   size='sm'),
+                    ], style={'width': '100%'}),
                 ], style=input_card_header_style),
-                dbc.CardBody([], style=input_card_body_style),
+                dbc.CardBody(inputs_B44, style=input_card_body_style),
             ]),
         ], xs=12, sm=12, md=6, lg=4, xl=3),
     ], no_gutters=True),
     dbc.Row([], style={'height': '5px'}),
+    dcc.Store(id='cargo_data'),
+    dbc.Row([], id='cargo_list', align='top', style={'width': '100%'}, no_gutters=True),
+    dbc.Row([], style={'height': '5px'}),
     dbc.Row([
         dbc.Col([
             dbc.Card([
-                dbc.CardHeader([html.P('Hydrostatics Report')], style=input_card_header_style),
-                dbc.CardBody(report_viewer, style={'overflow': 'auto', 'height': '500px'}),
-                dbc.CardFooter([], style=input_card_footer_style),
+                dbc.Collapse([
+                    dbc.CardHeader(['Hydrostatics Report'], style=input_card_header_style),
+                    dbc.CardBody(report_viewer),
+                    dbc.CardFooter([], style=input_card_footer_style)
+                ], id='collapse_hs_report'),
             ]),
         ]),
     ]),
 ], fluid=True)
+
+
+def create_cargo(n):
+    input_cargo_item = dbc.Col([
+        dbc.Card([
+            dbc.CardHeader([
+                dbc.Row([
+                    dbc.Col([html.P(f'Cargo Item {n}')]),
+                    dbc.Col([
+                        dbc.FormGroup([
+                            dbc.Input(id={'type': 'c_mass', 'index': n}, type='number', value=0, persistence=False,
+                                      bs_size='sm', persistence_type='local', inputMode='numeric',
+                                      disabled=False, style=input_style),
+                            html.P('Weight [t]'),
+                        ], row=True)
+                    ]),
+                ], align='start', justify='between'),
+            ], style=input_card_header_style),
+            dbc.CardBody([
+                dbc.FormGroup([
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_l', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  disabled=False, style=input_style),
+                        dbc.FormText('Length [m]')
+                    ]),
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_w', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  disabled=False, style=input_style),
+                        dbc.FormText('Width TCG [m]')
+                    ]),
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_h', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  style=input_style),
+                        dbc.FormText('Height VCG [m]')
+                    ]),
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_x', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  disabled=False, style=input_style),
+                        dbc.FormText('Global LCG [m]')
+                    ]),
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_y', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  disabled=False, style=input_style),
+                        dbc.FormText('Global TCG [m]')
+                    ]),
+                    dbc.Col([
+                        dbc.Input(id={'type': 'c_z', 'index': n}, type='number', value=0, persistence=False,
+                                  bs_size='sm', persistence_type='local', inputMode='numeric',
+                                  style=input_style),
+                        dbc.FormText('Global VCG [m]')
+                    ]),
+                ], row=True)
+            ])
+        ])
+    ], xs=12, sm=12, md=6, lg=4, xl=3)
+    return input_cargo_item
+
+
+@app.callback([Output('cargo_list', 'children')], [Input('add_cargo', 'n_clicks')], [State('cargo_list', 'children')])
+def add_cargo_ui(n, cargo):
+    if n > 0:
+        print(len(cargo))
+        cargo_item = create_cargo(n)
+        cargo.append(cargo_item)
+        return [cargo]
+
+
+@app.callback(
+    [Output('cargo_data', 'data')],
+    [Input({'type': 'c_mass', 'index': ALL}, 'value'), Input({'type': 'c_l', 'index': ALL}, 'value'),
+     Input({'type': 'c_w', 'index': ALL}, 'value'), Input({'type': 'c_h', 'index': ALL}, 'value'),
+     Input({'type': 'c_x', 'index': ALL}, 'value'), Input({'type': 'c_y', 'index': ALL}, 'value'),
+     Input({'type': 'c_z', 'index': ALL}, 'value')])
+def add_cargo_data(c_mass, c_l, c_w, c_h, c_x, c_y, c_z):
+    cargo = {'c_mass': c_mass, 'c_l': c_l, 'c_w': c_w, 'c_h': c_h, 'c_x': c_x, 'c_y': c_y, 'c_z': c_z}
+    return [cargo]
 
 
 @app.callback([Output('run_button', 'children')], [Input('run_button', 'n_clicks'), Input('Value_data', 'data')])
@@ -355,22 +458,55 @@ def button_image(n, Values_in):
         return ['▷']
 
 
+@app.callback(
+    [Output('v_update_data', 'data')],
+    [Input('v_mass', 'value'), Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
+     Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'), Input('rho_water', 'value'),
+     Input('cargo_data', 'data')]
+)
+def calculate_draft(v_mass, v_l, v_b, v_h, cogx, cogy, cogz, rho_water, cargo):
+    draft_check = False
+    disp_input = v_mass + sum(cargo['c_mass'])
+    COG = COG_shift_cargo(cargo, disp_input, cogx, cogy, cogz)
+    v_t = 0.5
+    while draft_check is False:
+        mesh = meshmaker(v_l, v_b, v_h - v_t, v_t, v_l, v_b, v_t)
+        faces, vertices = mesh.barge()
+        disp = disp_calc(faces, vertices, COG[0], COG[1], COG[2], rho_water, 9.81) / 1000
+        disp_diff = (disp_input - disp) / disp_input
+        if disp_diff >= 0.5:
+            v_t = v_t + 1
+        elif disp_diff >= 0.1:
+            v_t = v_t + 0.1
+        elif disp_diff >= 0.01:
+            v_t = v_t + 0.01
+        elif disp_diff > 0.001:
+            v_t = v_t + 0.001
+        elif disp_diff < 0.001:
+            draft_check = True
+    v_update_data = {'v_t': v_t, 'cogx': COG[0], 'cogy': COG[1], 'cogz': COG[2]}
+    print(COG)
+    return [v_update_data]
+
+
 @app.callback([Output('Value_data', 'data'), Output('RAO_data', 'data')], [
     Input('run_button', 'n_clicks'),
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-    Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+    Input('v_update_data', 'data'),
     Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
     Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('water_depth', 'value'),
-    Input('rho_water', 'value')
+    Input('rho_water', 'value'), Input('cargo_data', 'data'),
 ])
-def initialize_value(n1, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min,
-                     water_depth, rho_water):
+def initialize_value(n1, v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_min,
+                     water_depth, rho_water, cargo):
+    v_t = v_update_data['v_t']
+    cogx = v_update_data['cogx']
+    cogy = v_update_data['cogy']
+    cogz = v_update_data['cogz']
     ctx = dash.callback_context
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
     if trigger_name == 'run_button':
-        Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
-                            rho_water, 0, 0)
         RAOs = {
             'Period': 0,
             'Surge': 0,
@@ -380,12 +516,19 @@ def initialize_value(n1, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_
             'Pitch': 0,
             'Yaw': 0,
         }
-        Valuespd = pd.DataFrame.from_records([Values])
-        Values_json = Valuespd.to_json()
         RAOpd = pd.DataFrame.from_records([RAOs])
         RAOs_json = RAOpd.to_json()
+
+        Values_initial = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min,
+                                    water_depth, rho_water, 0, 0)
+        Valuespd_initial = pd.DataFrame.from_records([Values_initial])
         global global_body, Mk, Ck, HS_lock
-        global_body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2, HS_lock = makemesh(Valuespd)
+        global_body, Mk, Ck, COG, HS_report, faces, vertices, faces2, vertices2, HS_lock = makemesh(Valuespd_initial,
+                                                                                                    cargo)
+        Values = makeValues(v_l, v_b, v_h, v_t, COG[0], COG[1], COG[2], p_l, p_w, p_h, t_min, t_max, n_t, d_min,
+                            water_depth, rho_water, 0, 0)
+        Valuespd = pd.DataFrame.from_records([Values])
+        Values_json = Valuespd.to_json()
         return [Values_json, RAOs_json]
     else:
         raise PreventUpdate
@@ -409,11 +552,10 @@ def initialize_value(n1, v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_
 # #         return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
 
 
-@app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children'),
-               Output('run_damped', 'value')],
+@app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children')],
               [Input('Value_data', 'data'), Input('RAO_data', 'data'), Input('interval', 'n_intervals'),
                Input('Cm', 'value'), Input('pct_crit', 'value')],
-              [State('run_damped', 'value')])
+              [State('vessel_damped', 'active')])
 def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
     Valuespd_in = pd.read_json(Values_json)
     RAOpd_in = pd.read_json(RAOpd_json)
@@ -424,14 +566,14 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
         inputs = Valuespd_in.copy()
         inputs['n_t'] = 1
         inputs['t_min'] = omega[count].tolist()[0]
-        if run_damped == ['YES'] and float(Valuespd_in['B44']) == 0:
+        if run_damped and float(Valuespd_in['B44']) == 0:
             inputs['d_min'] = 90
+        print(inputs)
         RAO_val, FRAO_val = EOM(global_body, Mk, Ck, inputs, show=False).solve()
         RAO_val.insert(0, omega[count].tolist()[0])
         RAOpd_in.loc[len(RAOpd_in)] = RAO_val
         Valuespd_in['counter'] = float(Valuespd_in['counter']) + 1
-        if progress == 100 and run_damped == ['YES'] and float(Valuespd_in['B44']) == 0:
-            run_damped_out = run_damped
+        if progress == 100 and run_damped and float(Valuespd_in['B44']) == 0:
             B44 = damptheroll(Valuespd_in, RAOpd_in, Cm, pct_crit)
             a = Valuespd_in.to_dict('records')[0]
             Values = makeValues(a['v_l'], a['v_b'], a['v_h'], a['v_t'], a['cogx'], a['cogy'], a['cogz'], a['p_l'],
@@ -449,26 +591,29 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
             Valuespd_in = pd.DataFrame.from_records([Values])
             RAOpd_in = pd.DataFrame.from_records([RAOs])
             figure_RAO = create_empty_figure()
-            figure_title = f"Calculating roll damping"
         else:
-            B44 = float(Valuespd_in['B44'])
-            run_damped_out = run_damped
             figure_RAO = create_figure(RAOpd_in)
             if float(Valuespd_in['B44']) == 0:
-                if run_damped == ['YES']:
-                    figure_RAO.update_layout(title=str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"))
+                if run_damped:
+                    figure_RAO.update_layout(
+                        title={'text': str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"), 'x': 0.5,
+                               'xanchor': 'center'})
                 else:
-                    figure_RAO.update_layout(title=str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"))
+                    figure_RAO.update_layout(
+                        title={'text': str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"), 'x': 0.5,
+                               'xanchor': 'center'})
             else:
-                figure_RAO.update_layout(title=str(
-                    f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"))
+                figure_RAO.update_layout(
+                    title={'text': str(
+                        f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"),
+                        'x': 0.5, 'xanchor': 'center'})
         RAOpd_out = RAOpd_in.to_json()
         Values_out = Valuespd_in.to_json()
         return [[
             dcc.Store(id='RAO_data', data=RAOpd_out),
             dcc.Store(id='Value_data', data=Values_out),
-            dcc.Graph(id='graph', figure=figure_RAO)],
-            progress, f"{progress} %" if progress >= 5 else "", run_damped_out]
+            dcc.Graph(id='graph', figure=figure_RAO, style={'height': '100%'}, config={'displayModeBar': True})],
+            progress, f"{progress} %" if progress >= 5 else ""]
     else:
         raise PreventUpdate
 
@@ -504,28 +649,23 @@ def create_figure(RAOpd):
                         range=[sorted(RAOpd['Period'].tolist())[1], max(RAOpd['Period'].tolist())])
     figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
     figure.update_yaxes(title_text='Rotational RAOs [deg/m]', secondary_y=True)
-    figure.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+    figure.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    figure.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+    figure.update_layout(modebar={'orientation': 'h', 'bgcolor': 'white', 'add': 'hovercompare'})
     return figure
 
 
-def create_empty_figure():
-    figure = make_subplots(specs=[[{"secondary_y": True}]])
-    figure.update_layout(yaxis=dict(showexponent='all', exponentformat='e'))
-    figure.update_yaxes(title_text='Translational RAOs [m/m]', secondary_y=False)
-    figure.update_yaxes(title_text='Rotational RAOs [deg/m]', secondary_y=True)
-    return figure
-
-
-def makemesh(a):
-    mesh = meshmaker(a["v_l"], a["v_b"], 0, a["v_t"], a["p_l"], a["p_w"], a["p_h"])
+def makemesh(Values, cargo):
+    mesh = meshmaker(Values["v_l"], Values["v_b"], 0, Values["v_t"], Values["p_l"], Values["p_w"], Values["p_h"])
     faces, vertices = mesh.barge()
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
-    mesh2 = meshmaker(a["v_l"], a["v_b"], a["v_h"] - a["v_t"], a["v_t"], a["v_l"], a["v_b"], a["v_t"])
+    mesh2 = meshmaker(Values["v_l"], Values["v_b"], Values["v_h"] - Values["v_t"], Values["v_t"], Values["v_l"],
+                      Values["v_b"], Values["v_t"])
     faces2, vertices2 = mesh2.barge()
-    Mk, Ck, HS_report, HS = meshK(faces2, vertices2, float(a['cogx']), float(a['cogy']), float(a['cogz']),
-                                  float(a['rho_water']), 9.81)
-    return body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2, HS
+    Mk, Ck, COG, HS_report, HS = meshK(faces2, vertices2, float(Values['cogx']), float(Values['cogy']),
+                                       float(Values['cogz']), float(Values['rho_water']), 9.81, cargo)
+    return body, Mk, Ck, COG, HS_report, faces, vertices, faces2, vertices2, HS
 
 
 def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water,
@@ -559,16 +699,19 @@ def makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max
                Output('badge_COB', 'children'), Output('badge_ROG', 'children'), Output('badge_GMT', 'children'),
                Output('badge_v_t', 'children')], [
                   Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-                  Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+                  Input('v_update_data', 'data'),
                   Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
                   Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'),
-                  Input('water_depth', 'value'),
-                  Input('rho_water', 'value')
+                  Input('water_depth', 'value'), Input('rho_water', 'value'), Input('cargo_data', 'data'),
               ])
-def HSOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
+def HSOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water, cargo):
+    v_t = v_update_data['v_t']
+    cogx = v_update_data['cogx']
+    cogy = v_update_data['cogy']
+    cogz = v_update_data['cogz']
     Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
                         rho_water, 0, 0)
-    global_body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2, HS = makemesh(Values)
+    global_body, Mk, Ck, COG, HS_report, faces, vertices, faces2, vertices2, HS = makemesh(Values, cargo)
     HS_report = HS_report.splitlines()
     output = [html.P('\n \n \n')]
     for a in range(len(HS_report)):
@@ -592,7 +735,7 @@ def HSOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t
     return [
         HS_data,
         f"Displacement: {np.round(HS['disp_mass'] / 1000, 1)} MT",
-        f"Center of gravity: [{cogx}, {cogy}, {cogz}] m",
+        f"Center of gravity: [{np.round(cogx, 3)}, {np.round(cogy, 3)}, {np.round(cogz, 3)}] m",
         f"Center of buoyancy: [{COB[0]}, {COB[1]}, {COB[2]}] m",
         f"Radii of gyration: [{ROG[0][1]}, {ROG[1][1]}, {ROG[2][1]}] m",
         f"GMT: {np.round(HS['transversal_metacentric_height'], 3)} m",
@@ -602,15 +745,20 @@ def HSOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t
 
 @app.callback([Output('mesh_viewer', 'children')], [
     Input('v_l', 'value'), Input('v_b', 'value'), Input('v_h', 'value'),
-    Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'), Input('cogz', 'value'),
+    Input('v_update_data', 'data'),
     Input('p_l', 'value'), Input('p_w', 'value'), Input('p_h', 'value'), Input('t_min', 'value'),
     Input('t_max', 'value'), Input('n_t', 'value'), Input('d_min', 'value'), Input('water_depth', 'value'),
-    Input('rho_water', 'value')
+    Input('rho_water', 'value'), Input('cargo_data', 'data'),
 ])
-def MESHOut(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water):
+def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth, rho_water,
+            cargo):
+    v_t = v_update_data['v_t']
+    cogx = v_update_data['cogx']
+    cogy = v_update_data['cogy']
+    cogz = v_update_data['cogz']
     Values = makeValues(v_l, v_b, v_h, v_t, cogx, cogy, cogz, p_l, p_w, p_h, t_min, t_max, n_t, d_min, water_depth,
                         rho_water, 0, 0)
-    global_body, Mk, Ck, HS_report, faces, vertices, faces2, vertices2, HS = makemesh(Values)
+    global_body, Mk, Ck, COG, HS_report, faces, vertices, faces2, vertices2, HS = makemesh(Values, cargo)
     for b in range(len(faces)):
         faces[b].insert(0, 4)
     for c in range(len(faces2)):
@@ -666,10 +814,13 @@ def save_file(name, content):
 
 
 @app.callback([Output('mesh_viewer_upload', 'children')],
-              [Input('upload-mesh', 'contents'), Input('v_t', 'value'), Input('cogx', 'value'), Input('cogy', 'value'),
-               Input('cogz', 'value')],
+              [Input('upload-mesh', 'contents'), Input('v_update_data', 'data')],
               [State('upload-mesh', 'filename')])
-def MESHOut_upload(uploaded_mesh, draft, cogx, cogy, cogz, filename):
+def MESHOut_upload(uploaded_mesh, v_update_data, filename):
+    draft = v_update_data['v_t']
+    cogx = v_update_data['cogx']
+    cogy = v_update_data['cogy']
+    cogz = v_update_data['cogz']
     ctx = dash.callback_context
     if ctx.triggered:
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -730,27 +881,15 @@ def MESHOut_upload(uploaded_mesh, draft, cogx, cogy, cogz, filename):
 
 
 @app.callback(
-    [Output("collapse_B44", "is_open")],
-    [Input("run_damped", "value")],
-    [State("collapse_B44", "is_open")],
-)
+    [Output("collapse_hs_report", "is_open")],
+    [Input("open_hs_report", "n_clicks")],
+    [State("collapse_hs_report", "is_open")])
 def toggle_collapse(n, is_open):
-    if n == ['YES']:
-        return [True]
-    else:
-        return [False]
-
-
-@app.callback(
-    [Output("collapse_cargo", "is_open")],
-    [Input("run_cargo", "value")],
-    [State("collapse_cargo", "is_open")],
-)
-def toggle_collapse(n, is_open):
-    if n == ['YES']:
-        return [True]
-    else:
-        return [False]
+    if n:
+        if is_open:
+            return [False]
+        else:
+            return [True]
 
 
 @app.callback(
@@ -765,15 +904,30 @@ def toggle_collapse(n1, n2, upload, barge):
         trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
     if trigger_name == 'mesh_upload':
         if upload:
-            return [False, barge, False, barge, False, barge]
+            return [upload, barge, upload, barge, upload, barge]
         else:
             return [True, False, True, False, True, False]
     if trigger_name == 'mesh_barge':
         if barge:
-            return [upload, False, upload, False, upload, False]
+            return [upload, barge, upload, barge, upload, barge]
         else:
             return [False, True, False, True, False, True]
 
 
+@app.callback(
+    [Output("Cm", "disabled"), Output("pct_crit", "disabled"),
+     Output("vessel_undamped", "active"), Output("vessel_damped", "active")],
+    [Input("vessel_undamped", "n_clicks"), Input("vessel_damped", "n_clicks")],
+    [State("vessel_undamped", "active"), State("vessel_damped", "active")])
+def toggle_collapse(n1, n2, undamped, damped):
+    ctx = dash.callback_context
+    if ctx.triggered:
+        trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
+    if trigger_name == 'vessel_undamped':
+        return [True, True, True, False]
+    if trigger_name == 'vessel_damped':
+        return [False, False, False, True]
+
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

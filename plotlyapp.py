@@ -287,7 +287,12 @@ main_header = [
                 dbc.Progress(id='progress_bar', style={"height": "40px", 'width': 'calc(100% - 325px)'}),
             ], no_gutters=False, style={'width': '100%'}, align='start'),
         ], style={'height': '60px'}),
-    ], style={'width': '100%'})
+    ], style={'width': '100%'}),
+    dbc.Tooltip('Upload input file', target='upload_info', placement='top', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Download input file', target='download_info', placement='top', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Add cargo item', target='add_cargo', placement='top', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Open hydrostatics report', target='open_hs_report', placement='top', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Run diffraction analysis', target='run_button', placement='top', style={'backgroundColor': Signal}),
 ]
 
 app.layout = dbc.Container([
@@ -296,7 +301,7 @@ app.layout = dbc.Container([
         dbc.Row([dbc.Col(main_header, style={'width': '100%'})], justify='center'),
         dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
         dbc.Row([], style={'height': '5px'}),
-    ], style={'position': 'sticky', 'top': '0', 'z-index': '3000'}),
+    ], style={'position': 'sticky', 'top': '0', 'z-index': '500'}),
     dbc.Row([
         dbc.Col([
             dbc.Card([dbc.CardBody(mesh_viewer, style={'height': '100%'})], style={'height': '60vh'}),
@@ -395,13 +400,13 @@ def create_cargo(n):
                         dbc.Input(id={'type': 'c_w', 'index': n}, type='number', value=0, persistence=False,
                                   bs_size='sm', persistence_type='local', inputMode='numeric',
                                   disabled=False, style=input_style),
-                        dbc.FormText('Width TCG [m]')
+                        dbc.FormText('Width [m]')
                     ]),
                     dbc.Col([
                         dbc.Input(id={'type': 'c_h', 'index': n}, type='number', value=0, persistence=False,
                                   bs_size='sm', persistence_type='local', inputMode='numeric',
                                   style=input_style),
-                        dbc.FormText('Height VCG [m]')
+                        dbc.FormText('Height [m]')
                     ]),
                     dbc.Col([
                         dbc.Input(id={'type': 'c_x', 'index': n}, type='number', value=0, persistence=False,
@@ -431,7 +436,6 @@ def create_cargo(n):
 @app.callback([Output('cargo_list', 'children')], [Input('add_cargo', 'n_clicks')], [State('cargo_list', 'children')])
 def add_cargo_ui(n, cargo):
     if n > 0:
-        print(len(cargo))
         cargo_item = create_cargo(n)
         cargo.append(cargo_item)
         return [cargo]
@@ -485,7 +489,6 @@ def calculate_draft(v_mass, v_l, v_b, v_h, cogx, cogy, cogz, rho_water, cargo):
         elif disp_diff < 0.001:
             draft_check = True
     v_update_data = {'v_t': v_t, 'cogx': COG[0], 'cogy': COG[1], 'cogz': COG[2]}
-    print(COG)
     return [v_update_data]
 
 
@@ -568,7 +571,6 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
         inputs['t_min'] = omega[count].tolist()[0]
         if run_damped and float(Valuespd_in['B44']) == 0:
             inputs['d_min'] = 90
-        print(inputs)
         RAO_val, FRAO_val = EOM(global_body, Mk, Ck, inputs, show=False).solve()
         RAO_val.insert(0, omega[count].tolist()[0])
         RAOpd_in.loc[len(RAOpd_in)] = RAO_val
@@ -763,7 +765,7 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
         faces[b].insert(0, 4)
     for c in range(len(faces2)):
         faces2[c].insert(0, 4)
-    content = dash_vtk.View(background=[1, 1, 1], children=[
+    geometries = [
         dash_vtk.GeometryRepresentation(
             property={'color': (0.5, 0.5, 0.5), 'edgeColor': (0, 0, 0), 'lighting': False, 'edgeVisibility': True},
             children=[
@@ -799,7 +801,25 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
                 )
             ]
         )
-    ])
+    ]
+    for a in range(len(cargo['c_mass'])):
+        cargo_geometry = dash_vtk.GeometryRepresentation(
+            property={'color': Navy, 'edgeColor': (1, 1, 1), 'lighting': False, 'opacity': 0.25,
+                      'ambientColor': (1, 1, 1), 'specularColor': (1, 1, 1), 'diffuseColor': (0, 0, 0)},
+            children=[
+                dash_vtk.Algorithm(
+                    vtkClass='vtkCubeSource',
+                    state={
+                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]],
+                        'xLength': cargo['c_l'][a],
+                        'yLength': cargo['c_w'][a],
+                        'zLength': cargo['c_h'][a],
+                    }
+                )
+            ]
+        )
+        geometries.append(cargo_geometry)
+    content = dash_vtk.View(background=[1, 1, 1], children=geometries)
     return [[content]]
 
 

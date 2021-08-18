@@ -249,12 +249,12 @@ inputs_B44 = [
     dbc.FormGroup([
         dbc.Col([
             dbc.Input(id='Cm', type='number', value=0.98, persistence=False, bs_size='sm', disabled=True,
-                      persistence_type='local', inputMode='numeric', style=input_style, max=1, min=0),
+                      persistence_type='local', inputMode='numeric', style=input_style, max=1, min=0, step=0.01),
             dbc.FormText('Cm [-]')
         ]),
         dbc.Col([
             dbc.Input(id='pct_crit', type='number', value=10, persistence=False, bs_size='sm', persistence_type='local',
-                      inputMode='numeric', style=input_style, max=10, min=0, disabled=True),
+                      inputMode='numeric', style=input_style, max=10, min=0, step=0.001, disabled=True),
             dbc.FormText('[%] of critical damping')
         ]),
     ], row=True)

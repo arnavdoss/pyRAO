@@ -34,7 +34,7 @@ class EOM:
         B44 = self.inputs['B44']
         omega = np.linspace(w_min, w_max, int(n_w))
         wave_dir = np.linspace(d_min, d_max, int(n_d))
-        CM, CA, Fex = self.solvediff(self.body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy,
+        CM, CA, Fex = self.solvediff(self.body, omega, wave_dir, water_depth, cogx, cogy,
                                      cogz-v_t, self.show)
         CA[w_min][3][3] = CA[w_min][3][3] + B44
         RAO = self.solveeom(w_min, self.Mk, np.array(CM[w_min]), np.array(CA[w_min]), self.Ck, Fex[w_min])
@@ -43,7 +43,7 @@ class EOM:
         # self.animate(omega.tolist()[0], body, RAO)
         # return RAO
 
-    def solvediff(self, body, v_l, v_b, v_t, p_l, p_w, p_h, omega, wave_dir, water_depth, cogx, cogy, cogz, show):
+    def solvediff(self, body, omega, wave_dir, water_depth, cogx, cogy, cogz, show):
 
         # body.add_all_rigid_body_dofs()
         axisx = cpt.Axis(vector=(1, 0, 0), point=(cogx, cogy, cogz))

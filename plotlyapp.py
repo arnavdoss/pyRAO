@@ -814,7 +814,7 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
                 dash_vtk.Algorithm(
                     vtkClass='vtkCubeSource',
                     state={
-                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]],
+                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]-v_t],
                         'xLength': cargo['c_l'][a],
                         'yLength': cargo['c_w'][a],
                         'zLength': cargo['c_h'][a],

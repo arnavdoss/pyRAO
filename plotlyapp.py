@@ -16,6 +16,7 @@ import dash_bootstrap_components as dbc  # conda install -c conda-forge dash-boo
 from dash.exceptions import PreventUpdate
 from Solver.hydrostatics_wrapper import meshK, disp_calc, COG_shift_cargo
 import dash_vtk
+import json
 
 # from stl import mesh  # pip install numpy-stl
 
@@ -277,8 +278,10 @@ main_header = [
                 html.Div([], style={'width': '10px'}),
                 dbc.ButtonGroup([
                     dbc.Button('pyRAO', outline=True, color='info', active=True),
-                    dbc.Button('↥', id='upload_info', outline=True, color='info'),
+                    dcc.Upload([dbc.Button('↥', id='upload_info', outline=True, color='info',
+                                           style={'border-radius': '0px', 'height': '40px'})], id='upload_inputs_data'),
                     dbc.Button('↧', id='download_info', outline=True, color='info'),
+                    dcc.Download(id='download_inputs'),
                     dbc.Button('⊞', id='add_cargo', outline=True, color='info'),
                     dbc.Button('🗐', id='open_hs_report', outline=True, color='info'),
                     dbc.Button('▷', id='run_button', outline=True, color='danger'),
@@ -356,6 +359,7 @@ app.layout = dbc.Container([
     ], no_gutters=True),
     dbc.Row([], style={'height': '5px'}),
     dcc.Store(id='cargo_data'),
+    dcc.Store(id='cargo_input_data'),
     dbc.Row([], id='cargo_list', align='top', style={'width': '100%'}, no_gutters=True),
     dbc.Row([], style={'height': '5px'}),
     dbc.Row([
@@ -663,7 +667,7 @@ def makemesh(Values, cargo):
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
     mesh2 = meshmaker(Values["v_l"], Values["v_b"], Values["v_h"] - Values["v_t"], Values["v_t"], Values["v_l"],
-                      Values["v_b"], Values["v_t"])
+                      Values["v_b"], float(Values["v_t"])/2)
     faces2, vertices2 = mesh2.barge()
     Mk, Ck, COG, HS_report, HS = meshK(faces2, vertices2, float(Values['cogx']), float(Values['cogy']),
                                        float(Values['cogz']), float(Values['rho_water']), 9.81, cargo)
@@ -810,7 +814,7 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
                 dash_vtk.Algorithm(
                     vtkClass='vtkCubeSource',
                     state={
-                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]],
+                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]-v_t],
                         'xLength': cargo['c_l'][a],
                         'yLength': cargo['c_w'][a],
                         'zLength': cargo['c_h'][a],
@@ -947,6 +951,46 @@ def toggle_collapse(n1, n2, undamped, damped):
         return [True, True, True, False]
     if trigger_name == 'vessel_damped':
         return [False, False, False, True]
+
+
+@app.callback(
+    Output('download_inputs', 'data'),
+    [Input('download_info', 'n_clicks')],
+    [State('cargo_data', 'data'), State('RAO_data', 'data'), State('v_l', 'value'), State('v_b', 'value'),
+     State('v_h', 'value'), State('v_mass', 'value'), State('p_l', 'value'), State('p_w', 'value'),
+     State('p_h', 'value'), State('cogx', 'value'), State('cogy', 'value'), State('cogz', 'value'),
+     State('t_min', 'value'), State('t_max', 'value'), State('n_t', 'value'), State('d_min', 'value'),
+     State('water_depth', 'value'), State('rho_water', 'value'), State('Cm', 'value'), State('pct_crit', 'value')],
+    prevent_initial_call=True)
+def download_inputs(n, cargo, RAO, v_l, v_b, v_h, v_mass, p_l, p_w, p_h, cogx, cogy, cogz, t_min, t_max, n_t, d_min,
+                    water_depth, rho_water, Cm, pct_crit):
+    if n:
+        inputs_output = [v_l, v_b, v_h, v_mass, p_l, p_w, p_h, cogx, cogy, cogz, t_min, t_max, n_t, d_min, water_depth,
+                         rho_water, Cm, pct_crit]
+        cargo_output = cargo
+        RAO_ouput = pd.read_json(RAO).to_dict(orient='list')
+        output = {'inputs': inputs_output, 'cargo': cargo_output, 'RAOs': RAO_ouput}
+        output_json = json.dumps(output, sort_keys=True, indent=4)
+        return dict(content=output_json, filename='inputs.txt')
+
+
+@app.callback(
+    [Output('cargo_input_data', 'data'), Output('graph', 'figure'), Output('v_l', 'value'), Output('v_b', 'value'),
+    Output('v_h', 'value'), Output('v_mass', 'value'), Output('p_l', 'value'), Output('p_w', 'value'),
+    Output('p_h', 'value'), Output('cogx', 'value'), Output('cogy', 'value'), Output('cogz', 'value'),
+    Output('t_min', 'value'), Output('t_max', 'value'), Output('n_t', 'value'), Output('d_min', 'value'),
+    Output('water_depth', 'value'), Output('rho_water', 'value'), Output('Cm', 'value'), Output('pct_crit', 'value')],
+    [Input('upload_inputs_data', 'contents')], [State('upload_inputs_data', 'filename')], prevent_initial_call=True)
+def upload_inputs(contents, filename):
+    save_file(filename, contents)
+    content = json.load(open(app.get_asset_url(f'app_uploaded_files/{filename}')))
+    ins = content['inputs']
+    cargo = content['cargo']
+    RAO = content['RAOs']
+    RAOpd = pd.DataFrame.from_records(RAO)
+    figure = create_figure(RAOpd)
+    return [cargo, figure, ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12],
+            ins[13], ins[14], ins[15], ins[16], ins[17]]
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ import json
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN], title='pyRAO', update_title=None,
                 meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
-# LUMEN, SANDSTONE, YETI, CERULEAN
+# LUMEN, SANDSTONE, YETI, CERULEAN, MATERIA,
 
 Aqua = '#00ADEF'
 Navy = '#00306B'
@@ -109,6 +109,7 @@ mesh_viewer = [
     ], id='collapse_vtk_upload', is_open=False, style={"width": "100%", "height": "100%"}),
 ]
 plot_viewer = [
+    dcc.Store(id='graph_download_info'),
     html.Div(id='wrapper_div', children=[
         dcc.Store(id='RAO_data'),
         dcc.Store(id='Value_data'),
@@ -291,7 +292,7 @@ main_header = [
             ], no_gutters=False, style={'width': '100%'}, align='start'),
         ], style={'height': '60px'}),
     ], style={'width': '100%'}),
-    dbc.Tooltip('Upload input file', target='upload_info', placement='top', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Upload input file', target='upload_inputs_data', placement='top', style={'backgroundColor': Navy}),
     dbc.Tooltip('Download input file', target='download_info', placement='top', style={'backgroundColor': Navy}),
     dbc.Tooltip('Add cargo item', target='add_cargo', placement='top', style={'backgroundColor': Navy}),
     dbc.Tooltip('Open hydrostatics report', target='open_hs_report', placement='top', style={'backgroundColor': Navy}),
@@ -323,7 +324,7 @@ app.layout = dbc.Container([
                         dbc.Button('Barge', id='mesh_barge', active=True, outline=True, color='info',
                                    style={'width': '50%'}, size='sm'),
                         dbc.Button('Upload mesh', id='mesh_upload', outline=True, color='info',
-                                   style={'width': '50%'}, size='sm', disabled=True),
+                                   style={'width': '50%'}, size='sm', disabled=False),
                     ], style={'width': '100%'}),
                 ], style=input_card_header_style),
                 dbc.CardBody(inputs_mesh, style=input_card_body_style),
@@ -437,12 +438,24 @@ def create_cargo(n):
     return input_cargo_item
 
 
-@app.callback([Output('cargo_list', 'children')], [Input('add_cargo', 'n_clicks')], [State('cargo_list', 'children')])
-def add_cargo_ui(n, cargo):
-    if n > 0:
-        cargo_item = create_cargo(n)
-        cargo.append(cargo_item)
-        return [cargo]
+@app.callback([Output('cargo_list', 'children')], [Input('add_cargo', 'n_clicks'), Input('cargo_input_data', 'data')],
+              [State('cargo_list', 'children')], prevent_initial_call=True)
+def add_cargo_ui(n, cargo_input, cargo):
+    if cargo_input is None:
+        cargo_input_items = 0
+    elif len(cargo_input['c_l']) == 0:
+        cargo_input_items = 0
+    else:
+        cargo_input_items = len(cargo_input['c_mass'])
+    ctx = dash.callback_context
+    if ctx.triggered:
+        trigger_name = ctx.triggered[0]['prop_id'].split('.')[0]
+    if trigger_name == 'cargo_input_data':
+        for a in range(cargo_input_items):
+            cargo.append(create_cargo(a + 1))
+    else:
+        cargo.append(create_cargo(cargo_input_items + n))
+    return [cargo]
 
 
 @app.callback(
@@ -450,10 +463,23 @@ def add_cargo_ui(n, cargo):
     [Input({'type': 'c_mass', 'index': ALL}, 'value'), Input({'type': 'c_l', 'index': ALL}, 'value'),
      Input({'type': 'c_w', 'index': ALL}, 'value'), Input({'type': 'c_h', 'index': ALL}, 'value'),
      Input({'type': 'c_x', 'index': ALL}, 'value'), Input({'type': 'c_y', 'index': ALL}, 'value'),
-     Input({'type': 'c_z', 'index': ALL}, 'value')])
-def add_cargo_data(c_mass, c_l, c_w, c_h, c_x, c_y, c_z):
-    cargo = {'c_mass': c_mass, 'c_l': c_l, 'c_w': c_w, 'c_h': c_h, 'c_x': c_x, 'c_y': c_y, 'c_z': c_z}
+     Input({'type': 'c_z', 'index': ALL}, 'value')], [State('cargo_input_data', 'data')])
+def add_cargo_data(c_mass, c_l, c_w, c_h, c_x, c_y, c_z, c_in):
+    if c_in is None:
+        cargo = {'c_mass': c_mass, 'c_l': c_l, 'c_w': c_w, 'c_h': c_h, 'c_x': c_x, 'c_y': c_y, 'c_z': c_z}
+    else:
+        cargo = {'c_mass': c_in['c_mass'], 'c_l': c_in['c_l'], 'c_w': c_in['c_w'], 'c_h': c_in['c_h'],
+                 'c_x': c_in['c_x'], 'c_y': c_in['c_y'], 'c_z': c_in['c_z']}
     return [cargo]
+
+
+@app.callback(
+    [Output({'type': 'c_mass', 'index': ALL}, 'value'), Output({'type': 'c_l', 'index': ALL}, 'value'),
+     Output({'type': 'c_w', 'index': ALL}, 'value'), Output({'type': 'c_h', 'index': ALL}, 'value'),
+     Output({'type': 'c_x', 'index': ALL}, 'value'), Output({'type': 'c_y', 'index': ALL}, 'value'),
+     Output({'type': 'c_z', 'index': ALL}, 'value')], [Input('cargo_data', 'data')])
+def add_cargo_data(cargo):
+    return [cargo['c_mass'], cargo['c_l'], cargo['c_w'], cargo['c_h'], cargo['c_x'], cargo['c_y'], cargo['c_z']]
 
 
 @app.callback([Output('run_button', 'children')], [Input('run_button', 'n_clicks'), Input('Value_data', 'data')])
@@ -559,7 +585,8 @@ def initialize_value(n1, v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_m
 # #         return [graph, columns, data, style_data_conditional, RAO_json, graph_FRAO]
 
 
-@app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children')],
+@app.callback([Output('wrapper_div', 'children'), Output('progress_bar', 'value'), Output('progress_bar', 'children'),
+               Output('graph_download_info', 'data')],
               [Input('Value_data', 'data'), Input('RAO_data', 'data'), Input('interval', 'n_intervals'),
                Input('Cm', 'value'), Input('pct_crit', 'value')],
               [State('vessel_damped', 'active')])
@@ -597,29 +624,27 @@ def run_diff(Values_json, RAOpd_json, n, Cm, pct_crit, run_damped):
             Valuespd_in = pd.DataFrame.from_records([Values])
             RAOpd_in = pd.DataFrame.from_records([RAOs])
             figure_RAO = create_empty_figure()
+            title = 'No data'
         else:
             figure_RAO = create_figure(RAOpd_in)
             if float(Valuespd_in['B44']) == 0:
                 if run_damped:
-                    figure_RAO.update_layout(
-                        title={'text': str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"), 'x': 0.5,
-                               'xanchor': 'center'})
+                    title = str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)")
+                    figure_RAO.update_layout(title={'text': title, 'x': 0.5, 'xanchor': 'center'})
                 else:
-                    figure_RAO.update_layout(
-                        title={'text': str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)"), 'x': 0.5,
-                               'xanchor': 'center'})
+                    title = str(f"Undamped barge RAO ({float(inputs['d_min'])} deg waves)")
+                    figure_RAO.update_layout(title={'text': title, 'x': 0.5, 'xanchor': 'center'})
             else:
-                figure_RAO.update_layout(
-                    title={'text': str(
-                        f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves"),
-                        'x': 0.5, 'xanchor': 'center'})
+                title = str(
+                    f"Roll damped barge RAO ({pct_crit}% of critical damping) at {float(inputs['d_min'])} deg waves")
+                figure_RAO.update_layout(title={'text': title, 'x': 0.5, 'xanchor': 'center'})
         RAOpd_out = RAOpd_in.to_json()
         Values_out = Valuespd_in.to_json()
         return [[
             dcc.Store(id='RAO_data', data=RAOpd_out),
             dcc.Store(id='Value_data', data=Values_out),
             dcc.Graph(id='graph', figure=figure_RAO, style={'height': '100%'}, config={'displayModeBar': True})],
-            progress, f"{progress} %" if progress >= 5 else ""]
+            progress, f"{progress} %" if progress >= 5 else "", {'title': title, 'damped': run_damped}]
     else:
         raise PreventUpdate
 
@@ -667,7 +692,7 @@ def makemesh(Values, cargo):
     mesh = cpt.Mesh(vertices=vertices, faces=faces)
     body = cpt.FloatingBody(mesh=mesh, name="barge")
     mesh2 = meshmaker(Values["v_l"], Values["v_b"], Values["v_h"] - Values["v_t"], Values["v_t"], Values["v_l"],
-                      Values["v_b"], float(Values["v_t"])/2)
+                      Values["v_b"], float(Values["v_t"]) / 2)
     faces2, vertices2 = mesh2.barge()
     Mk, Ck, COG, HS_report, HS = meshK(faces2, vertices2, float(Values['cogx']), float(Values['cogy']),
                                        float(Values['cogz']), float(Values['rho_water']), 9.81, cargo)
@@ -814,7 +839,7 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
                 dash_vtk.Algorithm(
                     vtkClass='vtkCubeSource',
                     state={
-                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a]-v_t],
+                        'center': [cargo['c_x'][a], cargo['c_y'][a], cargo['c_z'][a] - v_t],
                         'xLength': cargo['c_l'][a],
                         'yLength': cargo['c_w'][a],
                         'zLength': cargo['c_h'][a],
@@ -960,36 +985,48 @@ def toggle_collapse(n1, n2, undamped, damped):
      State('v_h', 'value'), State('v_mass', 'value'), State('p_l', 'value'), State('p_w', 'value'),
      State('p_h', 'value'), State('cogx', 'value'), State('cogy', 'value'), State('cogz', 'value'),
      State('t_min', 'value'), State('t_max', 'value'), State('n_t', 'value'), State('d_min', 'value'),
-     State('water_depth', 'value'), State('rho_water', 'value'), State('Cm', 'value'), State('pct_crit', 'value')],
+     State('water_depth', 'value'), State('rho_water', 'value'), State('Cm', 'value'), State('pct_crit', 'value'),
+     State('graph_download_info', 'data')],
     prevent_initial_call=True)
 def download_inputs(n, cargo, RAO, v_l, v_b, v_h, v_mass, p_l, p_w, p_h, cogx, cogy, cogz, t_min, t_max, n_t, d_min,
-                    water_depth, rho_water, Cm, pct_crit):
+                    water_depth, rho_water, Cm, pct_crit, graph_info):
     if n:
         inputs_output = [v_l, v_b, v_h, v_mass, p_l, p_w, p_h, cogx, cogy, cogz, t_min, t_max, n_t, d_min, water_depth,
                          rho_water, Cm, pct_crit]
         cargo_output = cargo
-        RAO_ouput = pd.read_json(RAO).to_dict(orient='list')
-        output = {'inputs': inputs_output, 'cargo': cargo_output, 'RAOs': RAO_ouput}
+        if RAO is None:
+            RAOs = {
+                'Period': [],
+                'Surge': [],
+                'Sway': [],
+                'Heave': [],
+                'Roll': [],
+                'Pitch': [],
+                'Yaw': [],
+            }
+        else:
+            RAOs = pd.read_json(RAO).to_dict(orient='list')
+        output = {'inputs': inputs_output, 'cargo': cargo_output, 'RAOs': RAOs, 'graph_info': graph_info}
         output_json = json.dumps(output, sort_keys=True, indent=4)
-        return dict(content=output_json, filename='inputs.txt')
+        return dict(content=output_json, filename='inputs.ado')
 
 
 @app.callback(
     [Output('cargo_input_data', 'data'), Output('graph', 'figure'), Output('v_l', 'value'), Output('v_b', 'value'),
-    Output('v_h', 'value'), Output('v_mass', 'value'), Output('p_l', 'value'), Output('p_w', 'value'),
-    Output('p_h', 'value'), Output('cogx', 'value'), Output('cogy', 'value'), Output('cogz', 'value'),
-    Output('t_min', 'value'), Output('t_max', 'value'), Output('n_t', 'value'), Output('d_min', 'value'),
-    Output('water_depth', 'value'), Output('rho_water', 'value'), Output('Cm', 'value'), Output('pct_crit', 'value')],
+     Output('v_h', 'value'), Output('v_mass', 'value'), Output('p_l', 'value'), Output('p_w', 'value'),
+     Output('p_h', 'value'), Output('cogx', 'value'), Output('cogy', 'value'), Output('cogz', 'value'),
+     Output('t_min', 'value'), Output('t_max', 'value'), Output('n_t', 'value'), Output('d_min', 'value'),
+     Output('water_depth', 'value'), Output('rho_water', 'value'), Output('Cm', 'value'), Output('pct_crit', 'value')],
     [Input('upload_inputs_data', 'contents')], [State('upload_inputs_data', 'filename')], prevent_initial_call=True)
 def upload_inputs(contents, filename):
     save_file(filename, contents)
     content = json.load(open(app.get_asset_url(f'app_uploaded_files/{filename}')))
     ins = content['inputs']
     cargo = content['cargo']
-    RAO = content['RAOs']
-    RAOpd = pd.DataFrame.from_records(RAO)
-    figure = create_figure(RAOpd)
-    return [cargo, figure, ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12],
+    figure = create_figure(pd.DataFrame.from_records(content['RAOs']))
+    figure.update_layout(title={'text': content['graph_info']['title'], 'x': 0.5, 'xanchor': 'center'})
+    return [cargo, figure, ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10],
+            ins[11], ins[12],
             ins[13], ins[14], ins[15], ins[16], ins[17]]
 
 

@@ -300,7 +300,7 @@ main_header = [
 ]
 
 app.layout = dbc.Container([
-    dcc.Interval(id='interval', n_intervals=0, interval=1000),
+    dcc.Interval(id='interval', n_intervals=0, interval=100000),
     html.Div([
         dbc.Row([dbc.Col(main_header, style={'width': '100%'})], justify='center'),
         dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
@@ -858,8 +858,11 @@ def save_file(name, content):
         os.makedirs(UPLOAD_DIRECTORY)
     """Decode and store a file uploaded with Plotly Dash."""
     data = content.encode("utf8").split(b";base64,")[1]
-    with open(os.path.join(UPLOAD_DIRECTORY, name), "wb") as fp:
+    with open(name, "wb") as fp:
         fp.write(base64.decodebytes(data))
+    # info = open(base64.decodebytes(data), 'wb')
+    # contents = json.load(info)
+    # print(contents)
 
 
 @app.callback([Output('mesh_viewer_upload', 'children')],
@@ -1031,4 +1034,4 @@ def upload_inputs(contents, filename):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

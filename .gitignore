@@ -1,0 +1,7 @@
+venv
+*.pyc
+.env
+.DS_Store
+main.py
+crown_debug.vtp
+kmd_setup.py

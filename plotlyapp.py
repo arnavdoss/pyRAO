@@ -314,7 +314,7 @@ main_header = [
 ]
 
 app.layout = dbc.Container([
-    dcc.Interval(id='interval', n_intervals=0, interval=100000),
+    dcc.Interval(id='interval', n_intervals=0, interval=1000),
     html.Div([
         dbc.Row([dbc.Col(main_header, style={'width': '100%'})], justify='center'),
         dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
@@ -491,7 +491,7 @@ def add_cargo_data(c_mass, c_l, c_w, c_h, c_x, c_y, c_z, c_in):
     [Output({'type': 'c_mass', 'index': ALL}, 'value'), Output({'type': 'c_l', 'index': ALL}, 'value'),
      Output({'type': 'c_w', 'index': ALL}, 'value'), Output({'type': 'c_h', 'index': ALL}, 'value'),
      Output({'type': 'c_x', 'index': ALL}, 'value'), Output({'type': 'c_y', 'index': ALL}, 'value'),
-     Output({'type': 'c_z', 'index': ALL}, 'value')], [Input('cargo_data', 'data')])
+     Output({'type': 'c_z', 'index': ALL}, 'value')], [Input('cargo_input_data', 'data')])
 def add_cargo_data(cargo):
     return [cargo['c_mass'], cargo['c_l'], cargo['c_w'], cargo['c_h'], cargo['c_x'], cargo['c_y'], cargo['c_z']]
 

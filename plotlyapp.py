@@ -314,7 +314,7 @@ main_header = [
 ]
 
 app.layout = dbc.Container([
-    dcc.Interval(id='interval', n_intervals=0, interval=1000),
+    dcc.Interval(id='interval', n_intervals=0, interval=100000),
     html.Div([
         dbc.Row([dbc.Col(main_header, style={'width': '100%'})], justify='center'),
         dbc.Row([dbc.Col(info_badges)], justify='center', align='start'),
@@ -866,6 +866,12 @@ def MESHOut(v_l, v_b, v_h, v_update_data, p_l, p_w, p_h, t_min, t_max, n_t, d_mi
     return [[content]]
 
 
+def decode_upload(content):
+    data = content.encode("utf8").split(b";base64,")[1]
+    decoded = base64.decodebytes(data)
+    return decoded
+
+
 def save_file(name, content):
     UPLOAD_DIRECTORY = "/assets/app_uploaded_files"
     if not os.path.exists(UPLOAD_DIRECTORY):
@@ -874,10 +880,6 @@ def save_file(name, content):
     data = content.encode("utf8").split(b";base64,")[1]
     with open(os.path.join(UPLOAD_DIRECTORY, name), "wb") as fp:
         fp.write(base64.decodebytes(data))
-    # info = open(base64.decodebytes(data), 'wb')
-    # contents = json.load(info)
-    # print(contents)
-
 
 @app.callback([Output('mesh_viewer_upload', 'children')],
               [Input('upload-mesh', 'contents'), Input('v_update_data', 'data')],
@@ -1048,8 +1050,8 @@ def download_inputs(n, cargo, RAO, v_l, v_b, v_h, v_mass, p_l, p_w, p_h, cogx, c
      Output('water_depth', 'value'), Output('rho_water', 'value'), Output('Cm', 'value'), Output('pct_crit', 'value')],
     [Input('upload_inputs_data', 'contents')], [State('upload_inputs_data', 'filename')], prevent_initial_call=True)
 def upload_inputs(contents, filename):
-    save_file(filename, contents)
-    content = json.load(open(app.get_asset_url(f'app_uploaded_files/{filename}')))
+    decoded = decode_upload(contents)
+    content = json.loads(decoded)
     ins = content['inputs']
     cargo = content['cargo']
     figure = create_figure(pd.DataFrame.from_records(content['RAOs']))
@@ -1060,4 +1062,4 @@ def upload_inputs(contents, filename):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

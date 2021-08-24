@@ -107,6 +107,10 @@ mesh_viewer = [
     dbc.Collapse([
         html.Div(id='mesh_viewer_upload', style={"width": "100%", "height": "100%"}, children=['TEST']),
     ], id='collapse_vtk_upload', is_open=False, style={"width": "100%", "height": "100%"}),
+    dbc.Tooltip('[LMB] Orbit, [MMB] Pan, [RMB] Zoom', target='mesh_viewer', placement='bottom',
+                style={'backgroundColor': Navy}),
+    dbc.Tooltip('[LMB] Orbit, [MMB] Pan, [RMB] Zoom', target='mesh_viewer_upload', placement='bottom',
+                style={'backgroundColor': Navy}),
 ]
 plot_viewer = [
     dcc.Store(id='graph_download_info'),
@@ -261,7 +265,15 @@ inputs_B44 = [
         ]),
     ], row=True)
 ]
+about = dbc.ButtonGroup([
+            dbc.Button('Diffraction analysis tool based on following open-source packages: ', outline=True,
+                       color='info'),
+            dbc.Button('Plotly Dash', href='https://plotly.com/', outline=True, color='info'),
+            dbc.Button('Capytaine', href='https://github.com/mancellin/capytaine', outline=True, color='info'),
+            dbc.Button('Meshmagick', href='https://github.com/LHEEA/meshmagick', outline=True, color='info'),
+        ])
 info_badges = [
+    dbc.Collapse([dbc.Card([about])], id='pyRAO_info'),
     dbc.Badge('©2021, Arnav Doss', color='success'),
     dbc.Badge('Draft: 0 m', id='badge_v_t', color='info'),
     dbc.Badge(['Displacement: 0 MT'], id='badge_disp', color='info'),
@@ -278,7 +290,7 @@ main_header = [
                 html.Img(src=app.get_asset_url('pyRAO-logo.svg'), width="40px"),
                 html.Div([], style={'width': '10px'}),
                 dbc.ButtonGroup([
-                    dbc.Button('pyRAO', outline=True, color='info', active=True),
+                    dbc.Button('pyRAO', outline=True, color='info', active=True, id='pyRAO_info_button'),
                     dcc.Upload([dbc.Button('↥', id='upload_info', outline=True, color='info',
                                            style={'border-radius': '0px', 'height': '40px'})], id='upload_inputs_data'),
                     dbc.Button('↧', id='download_info', outline=True, color='info'),
@@ -292,11 +304,13 @@ main_header = [
             ], no_gutters=False, style={'width': '100%'}, align='start'),
         ], style={'height': '60px'}),
     ], style={'width': '100%'}),
-    dbc.Tooltip('Upload input file', target='upload_inputs_data', placement='top', style={'backgroundColor': Navy}),
-    dbc.Tooltip('Download input file', target='download_info', placement='top', style={'backgroundColor': Navy}),
-    dbc.Tooltip('Add cargo item', target='add_cargo', placement='top', style={'backgroundColor': Navy}),
-    dbc.Tooltip('Open hydrostatics report', target='open_hs_report', placement='top', style={'backgroundColor': Navy}),
-    dbc.Tooltip('Run diffraction analysis', target='run_button', placement='top', style={'backgroundColor': Signal}),
+    dbc.Tooltip('About pyRAO', target='pyRAO_info_button', placement='bottom', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Upload input file', target='upload_inputs_data', placement='bottom', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Download input file', target='download_info', placement='bottom', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Add cargo item', target='add_cargo', placement='bottom', style={'backgroundColor': Navy}),
+    dbc.Tooltip('Open hydrostatics report', target='open_hs_report', placement='bottom',
+                style={'backgroundColor': Navy}),
+    dbc.Tooltip('Run diffraction analysis', target='run_button', placement='bottom', style={'backgroundColor': Signal}),
 ]
 
 app.layout = dbc.Container([
@@ -936,6 +950,18 @@ def MESHOut_upload(uploaded_mesh, v_update_data, filename):
     [Output("collapse_hs_report", "is_open")],
     [Input("open_hs_report", "n_clicks")],
     [State("collapse_hs_report", "is_open")])
+def toggle_collapse(n, is_open):
+    if n:
+        if is_open:
+            return [False]
+        else:
+            return [True]
+
+
+@app.callback(
+    [Output("pyRAO_info", "is_open")],
+    [Input("pyRAO_info_button", "n_clicks")],
+    [State("pyRAO_info", "is_open")])
 def toggle_collapse(n, is_open):
     if n:
         if is_open:

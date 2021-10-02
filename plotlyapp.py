@@ -528,9 +528,11 @@ def calculate_draft(v_mass, v_l, v_b, v_h, cogx, cogy, cogz, rho_water, cargo):
             v_t = v_t + 0.1
         elif disp_diff >= 0.01:
             v_t = v_t + 0.01
-        elif disp_diff > 0.001:
+        elif disp_diff >= 0.001:
             v_t = v_t + 0.001
-        elif disp_diff < 0.001:
+        elif disp_diff > 0.0001:
+            v_t = v_t + 0.0001
+        elif disp_diff <= 0.0001:
             draft_check = True
     v_update_data = {'v_t': v_t, 'cogx': COG[0], 'cogy': COG[1], 'cogz': COG[2]}
     return [v_update_data]
@@ -1062,4 +1064,4 @@ def upload_inputs(contents, filename):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
